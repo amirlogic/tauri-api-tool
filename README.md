@@ -30,6 +30,7 @@ pnpm tauri add shell
 pnpm tauri add store
 pnpm tauri add opener
 pnpm tauri add os
+pnpm tauri add deep-link
 ```
 
 
@@ -43,3 +44,6 @@ sudo dnf install javascriptcoregtk4.1-devel
 sudo dnf install webkit2gtk4.1-devel
 ```
 
+### To-do
+
+- Implement Open With using deep-link
