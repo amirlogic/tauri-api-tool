@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "mdviewer",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "identifier": "com.tauri2.app",
   "build": {
     "frontendDist": "../src"
@@ -12,8 +12,7 @@
       {
         "title": "Markdown Viewer",
         "width": 800,
-        "height": 600,
-
+        "height": 600
       }
     ],
     "security": {
@@ -31,17 +30,15 @@
       "icons/icon.ico"
     ],
     "windows": {
-      "fileAssociations": [
-            {
-              "extensions": ["md", "markdown"],
-              "description": "Markdown File",
-              "name": "Markdown Viewer"
-            }
-          ]
     }
   },
   "plugins": {
-    "description": "The plugins config."
+    "description": "The plugins config.",
+    "deep-link": {
+      "desktop": {
+        "schemes": ["markdown", "mdviewer"]
+      }
+    }
   }
 
 }

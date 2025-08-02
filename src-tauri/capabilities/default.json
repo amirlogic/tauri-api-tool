@@ -25,6 +25,7 @@
       ]
     },
     "os:default",
+    "core:event:default",
     "deep-link:default"
   ]
 }

@@ -4,6 +4,8 @@ const { open, message } = window.__TAURI__.dialog;
 const { Command } = window.__TAURI__.shell;
 const { openPath } = window.__TAURI__.opener;
 const { platform } = window.__TAURI__.os;
+const { getCurrent } = window.__TAURI__.deepLink   // onOpenUrl
+//const {  } = window.__TAURI__.event
 
 let openedFile
 
@@ -141,6 +143,19 @@ window.addEventListener("DOMContentLoaded", () => {
     //testDialog()
     openMD()
   }) */
+
+  (async()=>{
+
+    const urls = await getCurrent()
+
+    console.log(`getCurrent: ${urls}`)
+
+    //await message(`getCurrent: ${urls}`, { title: 'deep-link', kind: 'info' });
+
+    document.getElementById(targetEl).innerText = `getCurrent: ${urls}`
+
+
+  })()
 
   document.getElementById('open-btn').addEventListener("click", (e) => {
 
