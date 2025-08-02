@@ -7,7 +7,7 @@
   ],
   "permissions": [
     "core:default",
-    "opener:default",
+    "opener:allow-open-path",
     "fs:default",
     "store:default",
     "dialog:default",
@@ -15,12 +15,14 @@
     "shell:allow-execute",
     {
       "identifier": "shell:allow-execute",
-      "allow": [{
-        "name": "notepad",
-        "cmd": "notepad.exe",
-        "args": true,
-        "sidecar": false
-      }]
+      "allow": [
+        {
+          "name": "notepad",
+          "cmd": "notepad.exe",
+          "args": true,
+          "sidecar": false
+        }
+      ]
     }
   ]
 }
