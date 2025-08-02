@@ -30,6 +30,7 @@ pnpm tauri add shell
 pnpm tauri add store
 pnpm tauri add opener
 pnpm tauri add os
+pnpm tauri add deep-link
 ```
 
 
