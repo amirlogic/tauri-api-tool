@@ -16,6 +16,9 @@ Uses PNPM
 
 ## Notes
 
+`withGlobalTauri` is set to `true`
+
+
 ### Plugins
 
 The following plugins were installed:
