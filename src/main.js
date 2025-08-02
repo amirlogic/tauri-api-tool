@@ -57,10 +57,7 @@ function showHistory(){
 
         loadMD(el.dataset.filename)
 
-        //document.getElementById('debug').textContent = `Go back to: ${el.dataset.filename}`
-        /* (async()=>{
-          await message(`You clicked on: `, { title: 'History', kind: 'info' });  // ${el.dataset.filename}
-        })() */
+        
       }
       catch(err){
 
@@ -72,10 +69,6 @@ function showHistory(){
   })
 }
 
-/* async function greet() {
-  // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-  greetMsgEl.textContent = await invoke("greet", { name: greetInputEl.value });
-} */
 
 async function loadMD(fname) {
 
@@ -163,12 +156,17 @@ window.addEventListener("DOMContentLoaded", () => {
 
     try{
 
+      await openPath(openedFile)
+
+    }
+    catch(err){
+
       await Command.create('notepad', [
         openedFile
       ]).execute();
 
     }
-    catch(err){
+    finally {
 
       errorMessage(err)
     }
@@ -187,10 +185,6 @@ window.addEventListener("DOMContentLoaded", () => {
 
   })
 
-  /* document.getElementById('nav-test').addEventListener("click", (e) => {
-    testDialog()
-    //await message(``, { title: 'About', kind: 'info' });
-  }) */
 
   document.getElementById('nav-clear').addEventListener("click", (e) => {
 
