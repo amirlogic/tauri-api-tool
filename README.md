@@ -44,3 +44,6 @@ sudo dnf install javascriptcoregtk4.1-devel
 sudo dnf install webkit2gtk4.1-devel
 ```
 
+### To-do
+
+- Implement Open With using deep-link
