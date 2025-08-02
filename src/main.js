@@ -3,7 +3,7 @@ const { exists, BaseDirectory, readTextFile } = window.__TAURI__.fs;
 const { open, message } = window.__TAURI__.dialog;
 const { Command } = window.__TAURI__.shell;
 const { openPath } = window.__TAURI__.opener;
-//const { load } = window.__TAURI__.store;
+const { platform } = window.__TAURI__.os;
 
 let openedFile
 

@@ -12,7 +12,8 @@
       {
         "title": "Markdown Viewer",
         "width": 800,
-        "height": 600
+        "height": 600,
+
       }
     ],
     "security": {
@@ -28,7 +29,19 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "windows": {
+      "fileAssociations": [
+            {
+              "extensions": ["md", "markdown"],
+              "description": "Markdown File",
+              "name": "Markdown Viewer"
+            }
+          ]
+    }
+  },
+  "plugins": {
+    "description": "The plugins config."
   }
 
 }
