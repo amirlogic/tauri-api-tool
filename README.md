@@ -6,6 +6,8 @@ Built using Tauri V2
 
 Uses Marked to generate HTML from Markdown
 
+Uses PNPM
+
 
 ## Apps
 
@@ -23,6 +25,7 @@ pnpm tauri add dialog
 pnpm tauri add fs
 pnpm tauri add shell
 pnpm tauri add store
+pnpm tauri add opener
 ```
 
 
