@@ -16,6 +16,9 @@ Uses PNPM
 
 ## Notes
 
+`withGlobalTauri` is set to `true`
+
+
 ### Plugins
 
 The following plugins were installed:
@@ -26,6 +29,7 @@ pnpm tauri add fs
 pnpm tauri add shell
 pnpm tauri add store
 pnpm tauri add opener
+pnpm tauri add os
 ```
 
 
