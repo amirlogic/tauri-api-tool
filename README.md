@@ -16,6 +16,8 @@ Uses PNPM
 
 ## Notes
 
+### Config
+
 `withGlobalTauri` is set to `true`
 
 
