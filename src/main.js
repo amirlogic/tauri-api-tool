@@ -1,11 +1,13 @@
 const { invoke } = window.__TAURI__.core;
 const { exists, BaseDirectory, readTextFile } = window.__TAURI__.fs;
+const { getCurrentWindow } = window.__TAURI__.window;
+
 const { open, message } = window.__TAURI__.dialog;
 const { Command } = window.__TAURI__.shell;
 const { openPath } = window.__TAURI__.opener;
 const { platform } = window.__TAURI__.os;
 const { getCurrent } = window.__TAURI__.deepLink   // onOpenUrl
-//const {  } = window.__TAURI__.event
+
 
 let openedFile
 
@@ -144,15 +146,46 @@ window.addEventListener("DOMContentLoaded", () => {
     openMD()
   }) */
 
+  
   (async()=>{
 
-    const urls = await getCurrent()
+    // OpenWith DEV
+    let devmode = "plugin"
 
-    console.log(`getCurrent: ${urls}`)
+    if(devmode == "plugin"){
 
-    //await message(`getCurrent: ${urls}`, { title: 'deep-link', kind: 'info' });
+      const urls = await getCurrent()
 
-    document.getElementById(targetEl).innerText = `getCurrent: ${urls}`
+      console.log(`getCurrent: ${urls}`)
+
+      //await message(`getCurrent: ${urls}`, { title: 'deep-link', kind: 'info' });
+
+      document.getElementById(targetEl).innerText = `getCurrent: ${urls}`
+
+    }
+    else if(devmode == "listen"){
+
+        const getevent = await getCurrentWindow().listen('deep-link', (event) => {
+
+          console.log(`getCurrentWindow().listen: ${event.payload}`);
+
+          document.getElementById(targetEl).innerText = `getCurrentWindow().listen: ${event.payload}`
+        });
+
+        /* const getevent = await getCurrentWindow().listen('open-file', (event) => {
+
+          
+          console.log(`getCurrentWindow().listen: ${event.payload}`);
+
+          document.getElementById(targetEl).innerText = `getCurrentWindow().listen: ${event.payload}`
+        }); */
+
+    }
+    else{
+
+      console.log("No DevMode specified")
+    }
+    
 
 
   })()
