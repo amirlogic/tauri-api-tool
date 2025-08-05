@@ -59,6 +59,10 @@
             {
               "name": "release",
               "description": "Run application in release mode"
+            },
+            {
+              "name": "open",
+              "description": "Open File"
             }
           ]
         }

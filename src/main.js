@@ -7,6 +7,7 @@ const { Command } = window.__TAURI__.shell;
 const { openPath } = window.__TAURI__.opener;
 const { platform } = window.__TAURI__.os;
 const { getCurrent } = window.__TAURI__.deepLink   // onOpenUrl
+const { getMatches } = window.__TAURI__.cli;
 
 
 let openedFile
@@ -26,18 +27,12 @@ async function errorMessage(err){
 }
 
 /* async function storeFileName(fname){
-
   //const store = await load('store.json', { autoSave: false });
-
   await store.set('lastfile', fname);
-
   await store.save();
 } */
-
 /* async function getStoreData(){
-
   //const store = await load('store.json', { autoSave: false });
-
   return await store.get('lastfile')
 } */
 
@@ -150,7 +145,7 @@ window.addEventListener("DOMContentLoaded", () => {
   (async()=>{
 
     // OpenWith DEV
-    let devmode = "plugin"
+    let devmode = "cli"
 
     if(devmode == "plugin"){
 
@@ -176,12 +171,30 @@ window.addEventListener("DOMContentLoaded", () => {
         });
 
         /* const getevent = await getCurrentWindow().listen('open-file', (event) => {
-
-          
           console.log(`getCurrentWindow().listen: ${event.payload}`);
-
           document.getElementById(targetEl).innerText = `getCurrentWindow().listen: ${event.payload}`
         }); */
+
+    }
+    else if(devmode == "cli"){
+
+      const matches = await getMatches();
+
+      if (matches.subcommand?.name === 'run') {
+
+        // `./your-app run $ARGS` was executed
+        const args = matches.subcommand.matches.args;
+
+        if (args.debug?.value === true) {
+          // `./your-app run --debug` was executed
+          document.getElementById(targetEl).innerText = `cli: debug`
+        }
+
+        if (args.release?.value === true) {
+          // `./your-app run --release` was executed
+        }
+
+      }
 
     }
     else{
