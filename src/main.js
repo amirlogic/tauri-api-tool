@@ -156,11 +156,14 @@ window.addEventListener("DOMContentLoaded", () => {
 
       const urls = await getCurrent()
 
-      console.log(`getCurrent: ${urls}`)
+      if(urls){
 
-      //await message(`getCurrent: ${urls}`, { title: 'deep-link', kind: 'info' });
+        console.log(`getCurrent: ${urls}`)
 
-      document.getElementById(targetEl).innerText = `getCurrent: ${urls}`
+        //await message(`getCurrent: ${urls}`, { title: 'deep-link', kind: 'info' });
+
+        document.getElementById(targetEl).innerText = `getCurrent: ${urls}`
+      }
 
     }
     else if(devmode == "listen"){
