@@ -33,6 +33,7 @@ pnpm tauri add store
 pnpm tauri add opener
 pnpm tauri add os
 pnpm tauri add deep-link
+pnpm tauri add cli
 ```
 
 
