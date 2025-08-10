@@ -16,6 +16,8 @@ Uses PNPM
 
 ## Notes
 
+### Config
+
 `withGlobalTauri` is set to `true`
 
 
@@ -31,6 +33,7 @@ pnpm tauri add store
 pnpm tauri add opener
 pnpm tauri add os
 pnpm tauri add deep-link
+pnpm tauri add cli
 ```
 
 
@@ -47,3 +50,7 @@ sudo dnf install webkit2gtk4.1-devel
 ### To-do
 
 - Implement Open With using deep-link
+
+- The app launches when using CMD: `start markdown://open-file?payload=C:/Users/you/Documents/example.md`
+
+- Deep link received when using `getCurrent()`
