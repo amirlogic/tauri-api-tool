@@ -110,7 +110,7 @@ async function openMD() {
   }
 }
 
-async function testDialog(){
+/* async function testDialog(){
 
   let stored = getStoreData()
 
@@ -127,7 +127,7 @@ async function testDialog(){
     await message(`Error: Could not get stored data`, { title: 'Tauri', kind: 'error' });
   }
   
-}
+} */
 
 window.addEventListener("DOMContentLoaded", () => {
 
@@ -179,6 +179,22 @@ window.addEventListener("DOMContentLoaded", () => {
     else if(devmode == "cli"){
 
       const matches = await getMatches();
+
+      if (matches.args && matches.args.file && matches.args.file.value) {
+        
+        const filePath = matches.args.file.value;
+
+        document.getElementById(targetEl).innerText = `open: ${filePath}`
+
+        await loadMD(filePath)
+
+        
+      }
+
+      /* if( matches.args[1].value ){
+
+        document.getElementById(targetEl).innerText = `open file: ${matches.args[1].value}`
+      } */
 
       if (matches.subcommand?.name === 'run') {
 
