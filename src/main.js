@@ -71,6 +71,8 @@ function showHistory(){
 
 async function loadMD(fname) {
 
+  console.log(`Md file opening requested: ${fname}`)
+
   let mdcontent = await readTextFile(fname)
       
   let html = marked.parse(mdcontent);
@@ -141,11 +143,31 @@ window.addEventListener("DOMContentLoaded", () => {
     openMD()
   }) */
 
-  
   (async()=>{
 
+    const matches = await getMatches();
+
+      if (matches.args && matches.args.file && matches.args.file.value) {
+        
+        const filePath = matches.args.file.value;
+
+        document.getElementById(targetEl).innerText = `open: ${filePath}`
+
+        const fileExists = await exists(filePath)
+
+        if(fileExists){
+
+          loadMD(filePath)
+        }
+        else{
+
+          errorMessage("File not found")
+        }
+
+      }
+
     // OpenWith DEV
-    let devmode = "cli"
+    let devmode = "none"
 
     if(devmode == "plugin"){
 
@@ -177,24 +199,6 @@ window.addEventListener("DOMContentLoaded", () => {
 
     }
     else if(devmode == "cli"){
-
-      const matches = await getMatches();
-
-      if (matches.args && matches.args.file && matches.args.file.value) {
-        
-        const filePath = matches.args.file.value;
-
-        document.getElementById(targetEl).innerText = `open: ${filePath}`
-
-        await loadMD(filePath)
-
-        
-      }
-
-      /* if( matches.args[1].value ){
-
-        document.getElementById(targetEl).innerText = `open file: ${matches.args[1].value}`
-      } */
 
       if (matches.subcommand?.name === 'run') {
 
@@ -274,13 +278,5 @@ window.addEventListener("DOMContentLoaded", () => {
 
   })
 
-  /* document.getElementById('mdfile').addEventListener("change", (e) => {
-    document.getElementById('filedata').textContent = document.getElementById('mdfile').value 
-  }); */
-  /* document.querySelector("#greet-form").addEventListener("submit", (e) => {
-    e.preventDefault();
-    //greet();
-    //viewMD()
-    testDialog()
-  }); */
+  
 });
