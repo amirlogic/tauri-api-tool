@@ -58,3 +58,4 @@ sudo dnf install webkit2gtk4.1-devel
 
 - Deep link received when using `getCurrent()`
 
+- Add Menu items using Window plugin
