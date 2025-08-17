@@ -1,6 +1,7 @@
 const { invoke } = window.__TAURI__.core;
 const { exists, BaseDirectory, readTextFile } = window.__TAURI__.fs;
 const { getCurrentWindow } = window.__TAURI__.window;
+const { join } = window.__TAURI__.path;
 
 const { open, message } = window.__TAURI__.dialog;
 const { Command } = window.__TAURI__.shell;
@@ -71,24 +72,31 @@ function showHistory(){
 
 async function loadMD(fname) {
 
-  console.log(`Md file opening requested: ${fname}`)
+  //console.log(`Md file opening requested: ${fname}`)
 
-  let mdcontent = await readTextFile(fname)
-      
-  let html = marked.parse(mdcontent);
+  try{
 
-  document.getElementById(targetEl).innerHTML = html
+    let mdcontent = await readTextFile(fname)
+        
+    let html = marked.parse(mdcontent);
 
-  if(history.indexOf(fname) == -1){
+    document.getElementById(targetEl).innerHTML = html
 
-    history.push(fname)
+    if(history.indexOf(fname) == -1){
+
+      history.push(fname)
+    }
+
+    openedFile = fname
+
+    document.getElementById('opened-file').innerText = fname
+
   }
+  catch(err){
 
-  openedFile = fname
-
-  document.getElementById('opened-file').innerText = fname
-
-  //storeFileName(fname)
+    errorMessage(err)
+  }
+  
 }
 
 async function openMD() {
@@ -147,24 +155,55 @@ window.addEventListener("DOMContentLoaded", () => {
 
     const matches = await getMatches();
 
+    try{
+
       if (matches.args && matches.args.file && matches.args.file.value) {
         
-        const filePath = matches.args.file.value;
+        let filePath = matches.args.file.value.trim();
 
-        document.getElementById(targetEl).innerText = `open: ${filePath}`
+        console.log(filePath)
+
+        if(filePath.indexOf('\\\\') !== -1){
+          
+          let pathrr = filePath.split('\\\\')
+
+          filePath = await join(...pathrr)
+        }
+        else{
+
+          let pathrr = filePath.split('\\')
+
+          filePath = await join(...pathrr)
+        }
+
+        openedFile = filePath   // debug
 
         const fileExists = await exists(filePath)
 
         if(fileExists){
 
-          loadMD(filePath)
+          document.getElementById(targetEl).innerText = `open: ${filePath}`
+
+          openedFile = filePath
+
+          //setTimeout(async () => {
+            
+          await loadMD(filePath)
+          //}, 1000)
         }
         else{
+
+          document.getElementById(targetEl).innerText = `File not found: ${filePath}`
 
           errorMessage("File not found")
         }
 
       }
+    }
+    catch(err){
+
+      errorMessage(err)
+    }
 
     // OpenWith DEV
     let devmode = "none"
