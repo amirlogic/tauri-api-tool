@@ -16,6 +16,11 @@ Uses PNPM
 
 ## Notes
 
+### Dev
+
+To pass command line arguments to dev: `pnpm tauri dev -- -- <arguments>`
+
+
 ### Config
 
 `withGlobalTauri` is set to `true`
@@ -47,10 +52,15 @@ sudo dnf install javascriptcoregtk4.1-devel
 sudo dnf install webkit2gtk4.1-devel
 ```
 
+
 ### To-do
 
-- Implement Open With using deep-link
+- Implement Open With using CLI
+
+- Filename as Positional argument 
 
 - The app launches when using CMD: `start markdown://open-file?payload=C:/Users/you/Documents/example.md`
 
 - Deep link received when using `getCurrent()`
+
+- Add Menu items using Window plugin
