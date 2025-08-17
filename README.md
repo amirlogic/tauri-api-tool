@@ -16,6 +16,11 @@ Uses PNPM
 
 ## Notes
 
+### Dev
+
+To pass command line arguments to dev: `pnpm tauri dev -- -- <arguments>`
+
+
 ### Config
 
 `withGlobalTauri` is set to `true`
