@@ -1,7 +1,8 @@
 const { invoke } = window.__TAURI__.core;
 const { exists, BaseDirectory, readTextFile } = window.__TAURI__.fs;
-const { getCurrentWindow } = window.__TAURI__.window;
+//const { getCurrentWindow } = window.__TAURI__.window;
 const { join } = window.__TAURI__.path;
+const { Menu, MenuItem, Submenu } = window.__TAURI__.menu;
 
 const { open, message } = window.__TAURI__.dialog;
 const { Command } = window.__TAURI__.shell;
@@ -108,35 +109,30 @@ async function openMD() {
       directory: false,
     });
 
-    loadMD(filename)
+    if(filename){
 
-    //document.getElementById('moreinfo').textContent = filename
-
+      loadMD(filename)
+    }
+    
   }
   catch(err){
 
     errorMessage(err)
-    //document.getElementById('debug').textContent = `${err}`
+    
   }
 }
 
 /* async function testDialog(){
-
   let stored = getStoreData()
-
   if(typeof(stored) == "string"){
-
     await message(`Stored filename (str): ${getStoreData()}`, { title: 'Tauri', kind: 'info' });
   }
   else if(typeof(stored) == "object"){
-
     await message(`Stored filename (obj): ${JSON.stringify(stored)}`, { title: 'Tauri', kind: 'info' });
   }
   else{
-
     await message(`Error: Could not get stored data`, { title: 'Tauri', kind: 'error' });
   }
-  
 } */
 
 window.addEventListener("DOMContentLoaded", () => {
@@ -150,6 +146,103 @@ window.addEventListener("DOMContentLoaded", () => {
     //testDialog()
     openMD()
   }) */
+
+  (async ()=>{
+
+    try{
+
+      const fileMenu = await Submenu.new({
+        text: 'File',
+        icon: 'folder',
+        items: [
+          await MenuItem.new({
+            id: 'open',
+            text: 'Open',
+            action: () => {
+
+              openMD()
+            },
+          }),
+          await MenuItem.new({
+            id: 'reload',
+            text: 'Reload',
+            action: () => {
+
+              loadMD(openedFile)
+            },
+          }),
+          await MenuItem.new({
+            id: 'edit',
+            text: 'Edit',
+            action: async () => {
+
+              try{
+
+                await openPath(openedFile)
+
+              }
+              catch(err){
+
+                await Command.create('notepad', [
+                  openedFile
+                ]).execute();
+
+              }
+              finally {
+
+                errorMessage(err)
+              }
+            },
+          }),
+          await MenuItem.new({
+            id: 'clear',
+            text: 'Clear',
+            action: () => {
+
+              document.getElementById(targetEl).innerHTML = ""
+
+              openedFile = ""
+            },
+          }),
+        ]
+      })
+
+      const helpMenu = await Submenu.new({
+        text: 'Help',
+        items: [
+          await MenuItem.new({
+            id: 'about',
+            text: 'About',
+            action: async () => {
+
+              await message(`Created by Amir Hachaichi\nUses marked\ngithub.com/amirlogic/tauri-apps-vanilla-js`, { title: 'About', kind: 'info' });
+            },
+          }),
+        ]
+      })
+
+      const menu = await Menu.new({
+        items: [
+          fileMenu,
+          {
+            id: 'recent',
+            text: 'Recent',
+            action: () => {
+              
+               showHistory()
+            },
+          },
+          helpMenu
+        ],
+      });
+
+      await menu.setAsAppMenu();
+    }
+    catch(err){
+
+      errorMessage(err)
+    }
+  })()
 
   (async()=>{
 
