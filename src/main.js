@@ -97,7 +97,16 @@ async function loadMD(fname) {
 
     errorMessage(err)
   }
-  
+
+  try{
+
+    
+  }
+  catch(err){
+
+    errorMessage(err)
+  }
+
 }
 
 async function openMD() {
@@ -358,17 +367,17 @@ window.addEventListener("DOMContentLoaded", () => {
 
   })()
 
-  document.getElementById('open-btn').addEventListener("click", (e) => {
+  /* document.getElementById('open-btn').addEventListener("click", (e) => {
 
     openMD()
-  })
+  }) */
 
-  document.getElementById('reload-btn').addEventListener("click", (e) => {
+  /* document.getElementById('reload-btn').addEventListener("click", (e) => {
 
     loadMD(openedFile)
-  })
+  }) */
 
-  document.getElementById('edit-btn').addEventListener("click", async (e) => {
+  /* document.getElementById('edit-btn').addEventListener("click", async (e) => {
 
     try{
 
@@ -387,28 +396,28 @@ window.addEventListener("DOMContentLoaded", () => {
       errorMessage(err)
     }
     
-  })
+  }) */
 
-  document.getElementById('nav-about').addEventListener("click", async (e) => {
+  /* document.getElementById('nav-about').addEventListener("click", async (e) => {
 
     await message(`Created by Amir Hachaichi\nUses marked\ngithub.com/amirlogic/tauri-apps-vanilla-js`, { title: 'About', kind: 'info' });
 
-  })
+  }) */
 
-  document.getElementById('nav-history').addEventListener("click", (e) => {
+  /* document.getElementById('nav-history').addEventListener("click", (e) => {
 
     showHistory()
 
-  })
+  }) */
 
 
-  document.getElementById('nav-clear').addEventListener("click", (e) => {
+  /* document.getElementById('nav-clear').addEventListener("click", (e) => {
 
     document.getElementById(targetEl).innerHTML = ""
 
     openedFile = ""
 
-  })
+  }) */
 
   
 });
