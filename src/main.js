@@ -1,7 +1,7 @@
 const { invoke } = window.__TAURI__.core;
 const { exists, BaseDirectory, readTextFile } = window.__TAURI__.fs;
 //const { getCurrentWindow } = window.__TAURI__.window;
-const { join } = window.__TAURI__.path;
+const { join, dirname } = window.__TAURI__.path;
 const { Menu, MenuItem, Submenu } = window.__TAURI__.menu;
 
 const { open, message } = window.__TAURI__.dialog;
@@ -100,7 +100,47 @@ async function loadMD(fname) {
 
   try{
 
-    
+    const mdlinks = document.querySelectorAll("a[href]")
+
+    mdlinks.forEach((lnk) => {
+
+      lnk.addEventListener("click", async (e)=>{
+
+        e.preventDefault()
+
+        try{
+
+        
+
+          if(lnk?.href.indexOf('http') === 0 ){
+
+            if(lnk.href.indexOf('.md') !== -1 ){
+
+              const url = new URL(lnk.href)
+
+              const filedir = await dirname(fname)
+
+              const targetmd = await join(filedir, url.pathname)
+
+              //await message(targetmd, { title: 'link', kind: 'info' });
+
+              await loadMD(targetmd)
+            }
+            else{
+
+              await message("Righ-click on the link to copy", { title: 'link', kind: 'info' });
+            }
+
+          }
+        }
+        catch(evrr){
+
+          errorMessage(evrr)
+        }
+
+      }, false)
+    })
+
   }
   catch(err){
 
