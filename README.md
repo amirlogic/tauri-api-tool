@@ -53,14 +53,14 @@ sudo dnf install webkit2gtk4.1-devel
 ```
 
 
-### To-do
+### Features
 
-- Implement Open With using CLI
+- Implement Open With using CLI ✅
 
-- Filename as Positional argument 
+- Filename as Positional argument ✅
 
 - The app launches when using CMD: `start markdown://open-file?payload=C:/Users/you/Documents/example.md`
 
-- Deep link received when using `getCurrent()`
+- Deep link received when using `getCurrent()` ✅
 
-- Add Menu items using Window plugin
+- Add Menu items using Window plugin ✅
