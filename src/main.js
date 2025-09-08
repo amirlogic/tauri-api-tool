@@ -120,7 +120,7 @@ async function loadMD(fname) {
 
               const filedir = await dirname(fname)
 
-              const targetmd = await join(filedir, url.pathname)
+              const targetmd = await join(filedir, decodeURI(url.pathname))
 
               //await message(targetmd, { title: 'link', kind: 'info' });
 
