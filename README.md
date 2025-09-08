@@ -52,6 +52,12 @@ sudo dnf install javascriptcoregtk4.1-devel
 sudo dnf install webkit2gtk4.1-devel
 ```
 
+### Debug
+
+To open the console and view errors: Open DevTools using Right click then Inspect.
+
+The semicolon after the 2 IIFEs inside the DOMContentLoaded event listener are necessary to avoid error.
+
 
 ### Features
 
