@@ -291,9 +291,10 @@ window.addEventListener("DOMContentLoaded", () => {
 
       errorMessage(err)
     }
-  })()
+  })();
 
-  (async()=>{
+
+  (async ()=>{
 
     const matches = await getMatches();
 
@@ -302,8 +303,6 @@ window.addEventListener("DOMContentLoaded", () => {
       if (matches.args && matches.args.file && matches.args.file.value) {
         
         let filePath = matches.args.file.value.trim();
-
-        console.log(filePath)
 
         if(filePath.indexOf('\\\\') !== -1){
           
@@ -402,10 +401,8 @@ window.addEventListener("DOMContentLoaded", () => {
 
       console.log("No DevMode specified")
     }
-    
 
-
-  })()
+  })();
 
   /* document.getElementById('open-btn').addEventListener("click", (e) => {
 
