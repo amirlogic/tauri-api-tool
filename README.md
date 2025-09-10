@@ -20,6 +20,10 @@ Uses PNPM
 
 To pass command line arguments to dev: `pnpm tauri dev -- -- <arguments>`
 
+Check Tauri version and update: 
+
+`pnpm outdated @tauri-apps/cli` then `pnpm update @tauri-apps/cli @tauri-apps/api --latest`
+
 
 ### Config
 
