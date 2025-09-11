@@ -149,9 +149,7 @@ async function loadMD(fname) {
 
         const url = new URL(img.src)
 
-        //img.alt = url // test
-
-        if(url.host == "127.0.0.1:1430" || url.host == "tauri"){
+        if(url.host == "127.0.0.1:1430" || url.host == "tauri.localhost"){
 
           const localimg = await join(filedir, decodeURI(url.pathname))
 
