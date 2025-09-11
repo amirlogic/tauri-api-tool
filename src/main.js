@@ -244,6 +244,14 @@ window.addEventListener("DOMContentLoaded", () => {
             },
           }),
           await MenuItem.new({
+            id: 'print',
+            text: 'Print',
+            action: () => {
+
+              window.print()
+            },
+          }),
+          await MenuItem.new({
             id: 'clear',
             text: 'Clear',
             action: () => {
