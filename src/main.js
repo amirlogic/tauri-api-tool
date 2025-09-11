@@ -1,7 +1,7 @@
 const { invoke } = window.__TAURI__.core;
-const { exists, BaseDirectory, readTextFile } = window.__TAURI__.fs;
+const { exists, BaseDirectory, readTextFile, readFile } = window.__TAURI__.fs;
 //const { getCurrentWindow } = window.__TAURI__.window;
-const { join, dirname } = window.__TAURI__.path;
+const { join, dirname, extname } = window.__TAURI__.path;
 const { Menu, MenuItem, Submenu } = window.__TAURI__.menu;
 
 const { open, message } = window.__TAURI__.dialog;
@@ -100,6 +100,8 @@ async function loadMD(fname) {
 
   try{
 
+    const filedir = await dirname(fname)
+
     const mdlinks = document.querySelectorAll("a[href]")
 
     mdlinks.forEach((lnk) => {
@@ -117,8 +119,6 @@ async function loadMD(fname) {
             if(lnk.href.indexOf('.md') !== -1 ){
 
               const url = new URL(lnk.href)
-
-              const filedir = await dirname(fname)
 
               const targetmd = await join(filedir, decodeURI(url.pathname))
 
@@ -139,6 +139,59 @@ async function loadMD(fname) {
         }
 
       }, false)
+    })
+
+    const imgs = document.querySelectorAll("img")
+
+    imgs.forEach(async (img) => {
+
+      try{
+
+        const url = new URL(img.src)
+
+        //img.alt = url // test
+
+        if(url.host == "127.0.0.1:1430" || url.host == "tauri"){
+
+          const localimg = await join(filedir, decodeURI(url.pathname))
+
+          const fileExists = await exists(localimg)
+
+          if(fileExists){
+
+            const imgbytes = await readFile(localimg)
+
+            const base64String = btoa(
+              Array.from(imgbytes)
+                .map(byte => String.fromCharCode(byte))
+                .join('')
+            )
+
+            const imgext = await extname(localimg)
+
+            img.src = `data:image/${imgext};base64,${base64String}`;
+
+            
+          }
+          else{
+
+            img.alt = "Image NOT found!"
+          }
+          
+        }
+        else{
+
+          img.alt = url
+        }
+
+      }
+      catch(imgrr){
+
+        errorMessage(imgrr)
+      }
+      
+
+
     })
 
   }
@@ -171,18 +224,7 @@ async function openMD() {
   }
 }
 
-/* async function testDialog(){
-  let stored = getStoreData()
-  if(typeof(stored) == "string"){
-    await message(`Stored filename (str): ${getStoreData()}`, { title: 'Tauri', kind: 'info' });
-  }
-  else if(typeof(stored) == "object"){
-    await message(`Stored filename (obj): ${JSON.stringify(stored)}`, { title: 'Tauri', kind: 'info' });
-  }
-  else{
-    await message(`Error: Could not get stored data`, { title: 'Tauri', kind: 'error' });
-  }
-} */
+
 
 window.addEventListener("DOMContentLoaded", () => {
 
