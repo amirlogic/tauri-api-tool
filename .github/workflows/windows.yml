@@ -23,6 +23,9 @@ jobs:
       - name: install Rust stable
         uses: dtolnay/rust-toolchain@stable
 
+      - name: install pnpm
+        run: npm install -g pnpm
+
       - name: install frontend dependencies
         run: pnpm install dialog fs shell store opener os deep-link cli
 
