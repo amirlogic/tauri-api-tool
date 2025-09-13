@@ -29,12 +29,11 @@ jobs:
       - name: install frontend dependencies
         run: pnpm install dialog fs shell store opener os deep-link cli
 
-      - uses: tauri-apps/tauri-action@v0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build Tauri app
+        run: pnpm tauri build
+
+      - name: Upload Tauri build artifacts
+        uses: actions/upload-artifact@v4
         with:
-          tagName: app-v__VERSION__ # the action automatically replaces \_\_VERSION\_\_ with the app version.
-          releaseName: 'App v__VERSION__'
-          releaseBody: 'See the assets to download this version and install.'
-          releaseDraft: true
-          prerelease: false
+          name: tauri-build-artifacts
+          path: src-tauri/target/release/bundle/
