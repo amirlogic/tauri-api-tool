@@ -2,10 +2,8 @@ name: 'build'
 
 on:
   workflow_dispatch:
+
   
-
-# This workflow will trigger on each push to the `release` branch to create or update a GitHub release, build your app, and upload the artifacts to the release.
-
 jobs:
   publish-tauri:
     permissions:
@@ -26,7 +24,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: install frontend dependencies
-        run: pnpm install # change this to npm, pnpm or bun depending on which one you use.
+        run: pnpm install dialog fs shell store opener os deep-link cli
 
       - uses: tauri-apps/tauri-action@v0
         env:
