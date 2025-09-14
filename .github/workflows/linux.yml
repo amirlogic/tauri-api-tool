@@ -1,0 +1,39 @@
+name: 'build-artifact-linux'
+
+on:
+  workflow_dispatch:
+
+  
+jobs:
+  publish-tauri:
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+
+    runs-on: 'ubuntu-22.04'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
+      - name: install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: install pnpm
+        run: npm install -g pnpm
+
+      - name: install frontend dependencies
+        run: pnpm install dialog fs shell store opener os deep-link cli
+
+      - name: Build Tauri app
+        run: pnpm tauri build
+
+      - name: Upload Tauri build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: tauri-build-artifacts
+          path: src-tauri/target/release/bundle/
