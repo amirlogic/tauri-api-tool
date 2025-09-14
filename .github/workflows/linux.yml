@@ -29,6 +29,17 @@ jobs:
       - name: install frontend dependencies
         run: pnpm install dialog fs shell store opener os deep-link cli
 
+      - name: install build tools
+        run: |
+             sudo apt update
+             sudo apt install -y \
+             build-essential \
+             pkg-config \
+             libgtk-3-dev \
+             libgdk-pixbuf2.0-dev \
+             libglib2.0-dev \
+             libcairo2-dev
+
       - name: Build Tauri app
         run: pnpm tauri build
 
