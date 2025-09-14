@@ -43,10 +43,15 @@ jobs:
              libjavascriptcoregtk-4.0-dev \
              libsoup-3.0-dev
 
+      - name: Update Cargo dependencies
+        run: cargo update
+
       - name: Build Tauri app
         env:
           JSC_SYS_JSCORE_VERSION: "4.0"
-        run: pnpm tauri build
+        run: |
+          cargo clean
+          pnpm tauri build
 
       - name: Upload Tauri build artifacts
         uses: actions/upload-artifact@v4
