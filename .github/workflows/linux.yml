@@ -39,6 +39,8 @@ jobs:
              libgdk-pixbuf2.0-dev \
              libglib2.0-dev \
              libcairo2-dev
+             libwebkit2gtk-4.0-dev \
+             libjavascriptcoregtk-4.0-dev
 
       - name: Build Tauri app
         run: pnpm tauri build
