@@ -44,6 +44,7 @@ jobs:
              libsoup-3.0-dev
 
       - name: Update Cargo dependencies
+        working-directory: src-tauri
         run: cargo update
 
       - name: Build Tauri app
