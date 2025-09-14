@@ -43,6 +43,8 @@ jobs:
              libjavascriptcoregtk-4.0-dev
 
       - name: Build Tauri app
+        env:
+          JSC_SYS_JSCORE_VERSION: "4.0"
         run: pnpm tauri build
 
       - name: Upload Tauri build artifacts
