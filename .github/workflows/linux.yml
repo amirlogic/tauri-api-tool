@@ -45,14 +45,14 @@ jobs:
 
       - name: Update Cargo dependencies
         working-directory: src-tauri
-        run: cargo update
+        run: |
+          cargo update
+          cargo clean
 
       - name: Build Tauri app
         env:
           JSC_SYS_JSCORE_VERSION: "4.0"
-        run: |
-          cargo clean
-          pnpm tauri build
+        run: pnpm tauri build
 
       - name: Upload Tauri build artifacts
         uses: actions/upload-artifact@v4
