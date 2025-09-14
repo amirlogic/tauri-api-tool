@@ -40,7 +40,8 @@ jobs:
              libglib2.0-dev \
              libcairo2-dev \
              libwebkit2gtk-4.0-dev \
-             libjavascriptcoregtk-4.0-dev
+             libjavascriptcoregtk-4.0-dev \
+             libsoup-3.0-dev
 
       - name: Build Tauri app
         env:
