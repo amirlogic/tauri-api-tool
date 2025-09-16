@@ -110,3 +110,15 @@ button {
     background-color: #0f0f0f69;
   }
 }
+
+@media print {
+
+  nav {
+    display: none !important;
+  }
+
+  #opened-file {
+
+    display: none;
+  }
+}
