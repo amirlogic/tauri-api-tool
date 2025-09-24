@@ -207,6 +207,7 @@ async function openMD() {
     const filename = await open({
       multiple: false,
       directory: false,
+      extensions: ['md']
     });
 
     if(filename){
