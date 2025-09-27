@@ -9,11 +9,6 @@ Uses Marked to generate HTML from Markdown
 Uses PNPM
 
 
-## Apps
-
-```dev``` MD Viewer Development 
-
-
 ## Notes
 
 ### Dev
