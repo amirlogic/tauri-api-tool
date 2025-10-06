@@ -1,10 +1,10 @@
-# Markdown Viewer
+# Image Tool
 
-Opens and views markdown files. Has recent opened files function. 
+
 
 Built using Tauri V2
 
-Uses Marked to generate HTML from Markdown
+
 
 Uses PNPM
 
