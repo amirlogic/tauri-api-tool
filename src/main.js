@@ -1,6 +1,6 @@
 const { invoke } = window.__TAURI__.core;
 const { exists, BaseDirectory, readTextFile, readFile } = window.__TAURI__.fs;
-//const { getCurrentWindow } = window.__TAURI__.window;
+
 const { join, dirname, extname } = window.__TAURI__.path;
 const { Menu, MenuItem, Submenu } = window.__TAURI__.menu;
 
@@ -14,7 +14,7 @@ const { getMatches } = window.__TAURI__.cli;
 
 let openedFile
 
-const targetEl = 'markdown'
+const targetEl = 'image'
 
 let history = []
 
@@ -56,7 +56,7 @@ function showHistory(){
 
         const el = e.currentTarget
 
-        loadMD(el.dataset.filename)
+        loadImage(el.dataset.filename)
 
         
       }
@@ -71,17 +71,50 @@ function showHistory(){
 }
 
 
-async function loadMD(fname) {
+async function loadImage(fname) {
 
   //console.log(`Md file opening requested: ${fname}`)
 
+  const imgext = await extname(fname)
+
   try{
 
-    let mdcontent = await readTextFile(fname)
-        
-    let html = marked.parse(mdcontent);
+    document.getElementById(targetEl).innerHTML = ''
 
-    document.getElementById(targetEl).innerHTML = html
+    if(imgext === 'svg'){
+
+      const rawsvg = await readTextFile(fname)
+
+      
+
+      const svg = rawsvg.substr(rawsvg.indexOf('<svg')) //rawsvg.indexOf('<svg')
+
+      //let df = new DocumentFragment()
+
+      //df.innerHTML = svg
+
+      //document.getElementById(targetEl).appendChild(df)
+
+      document.getElementById(targetEl).innerHTML = svg
+
+    }
+    else{
+
+      const imgbytes = await readFile(fname)
+          
+      const base64String = btoa(
+              Array.from(imgbytes)
+                .map(byte => String.fromCharCode(byte))
+                .join('')
+            )
+
+      const imgext = await extname(fname)
+
+      const html = `<img alt="local image" src="data:image/${imgext};base64,${base64String}" />`;
+
+      document.getElementById(targetEl).innerHTML = html
+
+    }
 
     if(history.indexOf(fname) == -1){
 
@@ -102,7 +135,7 @@ async function loadMD(fname) {
 
     const filedir = await dirname(fname)
 
-    const mdlinks = document.querySelectorAll("a[href]")
+    /* const mdlinks = document.querySelectorAll("a[href]")
 
     mdlinks.forEach((lnk) => {
 
@@ -124,7 +157,7 @@ async function loadMD(fname) {
 
               //await message(targetmd, { title: 'link', kind: 'info' });
 
-              await loadMD(targetmd)
+              await loadImage(targetmd)
             }
             else{
 
@@ -139,9 +172,9 @@ async function loadMD(fname) {
         }
 
       }, false)
-    })
+    }) */
 
-    const imgs = document.querySelectorAll("img")
+    /* const imgs = document.querySelectorAll("img")
 
     imgs.forEach(async (img) => {
 
@@ -190,7 +223,7 @@ async function loadMD(fname) {
       
 
 
-    })
+    }) */
 
   }
   catch(err){
@@ -200,19 +233,19 @@ async function loadMD(fname) {
 
 }
 
-async function openMD() {
+async function openImage() {
 
   try{
 
     const filename = await open({
       multiple: false,
       directory: false,
-      extensions: ['md']
+      extensions: ['svg','png','jpg','jpeg','bmp','gif','tiff']
     });
 
     if(filename){
 
-      loadMD(filename)
+      loadImage(filename)
     }
     
   }
@@ -227,16 +260,7 @@ async function openMD() {
 
 window.addEventListener("DOMContentLoaded", () => {
 
-  //greetInputEl = document.querySelector("#greet-input");
-  //greetMsgEl = document.querySelector("#greet-msg");
-  /* (async()=>{
-    store = await load('store.json', { autoSave: false });
-  })() */
-  /* document.getElementById('testdialog').addEventListener("click", (e) => {
-    //testDialog()
-    openMD()
-  }) */
-
+  
   (async ()=>{
 
     try{
@@ -250,7 +274,7 @@ window.addEventListener("DOMContentLoaded", () => {
             text: 'Open',
             action: () => {
 
-              openMD()
+              openImage()
             },
           }),
           await MenuItem.new({
@@ -258,7 +282,7 @@ window.addEventListener("DOMContentLoaded", () => {
             text: 'Reload',
             action: () => {
 
-              loadMD(openedFile)
+              loadImage(openedFile)
             },
           }),
           await MenuItem.new({
@@ -305,15 +329,50 @@ window.addEventListener("DOMContentLoaded", () => {
         ]
       })
 
+      const viewMenu = await Submenu.new({
+        text: 'View',
+        items: [
+          await MenuItem.new({
+            id: 'bgcolor',
+            text: 'Background Color',
+            action: async () => {
+
+              document.body.style.backgroundColor = '#F1F1F1'
+            },
+          }),
+        ]
+      })
+
       const helpMenu = await Submenu.new({
         text: 'Help',
         items: [
+          await MenuItem.new({
+            id: 'magickv',
+            text: 'ImageMagick Version',
+            action: async () => {
+
+              try{
+
+                const cmdres = await Command.create('magick', [
+                  '-version'
+                ]).execute();
+
+                await message(cmdres?.stdout, { title: 'ImageMagick Version', kind: 'info' });
+
+              }
+              catch(cmderr){
+
+                errorMessage(cmderr)
+              }
+              
+            },
+          }),
           await MenuItem.new({
             id: 'about',
             text: 'About',
             action: async () => {
 
-              await message(`Created by Amir Hachaichi\nUses marked\ngithub.com/amirlogic/tauri-apps-vanilla-js`, { title: 'About', kind: 'info' });
+              await message(`Image Tool v\nCreated by Amir Hachaichi\nUses marked\ngithub.com/amirlogic/tauri-image-tool`, { title: 'About', kind: 'info' });
             },
           }),
         ]
@@ -322,6 +381,7 @@ window.addEventListener("DOMContentLoaded", () => {
       const menu = await Menu.new({
         items: [
           fileMenu,
+          viewMenu,
           {
             id: 'recent',
             text: 'Recent',
@@ -378,7 +438,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
           //setTimeout(async () => {
             
-          await loadMD(filePath)
+          await loadImage(filePath)
           //}, 1000)
         }
         else{
@@ -455,12 +515,12 @@ window.addEventListener("DOMContentLoaded", () => {
 
   /* document.getElementById('open-btn').addEventListener("click", (e) => {
 
-    openMD()
+    openImage()
   }) */
 
   /* document.getElementById('reload-btn').addEventListener("click", (e) => {
 
-    loadMD(openedFile)
+    loadImage(openedFile)
   }) */
 
   /* document.getElementById('edit-btn').addEventListener("click", async (e) => {

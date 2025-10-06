@@ -37,8 +37,8 @@
       "identifier": "shell:allow-execute",
       "allow": [
         {
-          "name": "notepad",
-          "cmd": "notepad.exe",
+          "name": "magick",
+          "cmd": "magick",
           "args": true,
           "sidecar": false
         }
