@@ -1,6 +1,6 @@
 const { invoke } = window.__TAURI__.core;
 const { exists, BaseDirectory, readTextFile, readFile } = window.__TAURI__.fs;
-
+const { getVersion } = window.__TAURI__.app
 const { join, dirname, extname } = window.__TAURI__.path;
 const { Menu, MenuItem, Submenu } = window.__TAURI__.menu;
 
@@ -110,7 +110,7 @@ async function loadImage(fname) {
 
       const imgext = await extname(fname)
 
-      const html = `<img alt="local image" src="data:image/${imgext};base64,${base64String}" />`;
+      const html = `<img alt="local image" src="data:image/${imgext};base64,${base64String}" class="d-block mx-auto" />`;
 
       document.getElementById(targetEl).innerHTML = html
 
@@ -372,7 +372,10 @@ window.addEventListener("DOMContentLoaded", () => {
             text: 'About',
             action: async () => {
 
-              await message(`Image Tool v\nCreated by Amir Hachaichi\nUses marked\ngithub.com/amirlogic/tauri-image-tool`, { title: 'About', kind: 'info' });
+              const appVersion = await getVersion();
+
+              await message(`Image Tool v${appVersion}\nCreated by Amir Hachaichi\nUses marked\ngithub.com/amirlogic/tauri-image-tool`, 
+                            { title: 'About', kind: 'info' });
             },
           }),
         ]
