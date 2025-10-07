@@ -1,8 +1,10 @@
-const { invoke } = window.__TAURI__.core;
+
+//const { invoke } = window.__TAURI__.core;
 const { exists, BaseDirectory, readTextFile, readFile } = window.__TAURI__.fs;
 const { getVersion } = window.__TAURI__.app
 const { join, dirname, extname } = window.__TAURI__.path;
 const { Menu, MenuItem, Submenu } = window.__TAURI__.menu;
+const { getCurrentWindow } = window.__TAURI__.window;
 
 const { open, message } = window.__TAURI__.dialog;
 const { Command } = window.__TAURI__.shell;
@@ -20,8 +22,10 @@ let history = []
 
 let store
 
-let greetInputEl;
-let greetMsgEl;
+let imgWidth
+
+let imgHeight
+
 
 async function errorMessage(err){
 
@@ -110,9 +114,13 @@ async function loadImage(fname) {
 
       const imgext = await extname(fname)
 
-      const html = `<img alt="local image" src="data:image/${imgext};base64,${base64String}" class="d-block mx-auto" />`;
+      const html = `<img id="image-el" alt="local image" src="data:image/${imgext};base64,${base64String}" class="d-block mx-auto" />`;
 
       document.getElementById(targetEl).innerHTML = html
+
+      imgWidth = document.getElementById('image-el').naturalWidth
+
+      imgHeight = document.getElementById('image-el').naturalHeight
 
     }
 
@@ -309,11 +317,26 @@ window.addEventListener("DOMContentLoaded", () => {
             },
           }),
           await MenuItem.new({
-            id: 'print',
-            text: 'Print',
-            action: () => {
+            id: 'metadata',
+            text: 'Metadata',
+            action: async () => {
 
-              window.print()
+              try{
+
+                if(openedFile){
+
+                  const cmdres = await Command.create('magick', [
+                    'identify', '-verbose', `${openedFile}`
+                  ]).execute();
+
+                  await message(cmdres?.stdout, { title: 'ImageMagick Metadata', kind: 'info' }); //.length+cmdres?.stderr
+                }
+
+              }
+              catch(cmderr){
+
+                errorMessage(cmderr)
+              }
             },
           }),
           await MenuItem.new({
@@ -334,10 +357,25 @@ window.addEventListener("DOMContentLoaded", () => {
         items: [
           await MenuItem.new({
             id: 'bgcolor',
-            text: 'Background Color',
+            text: 'Background Color: Light Gray',
             action: async () => {
 
               document.body.style.backgroundColor = '#F1F1F1'
+            },
+          }),
+          await MenuItem.new({
+            id: 'test',
+            text: 'Dimensions',
+            action: async () => {
+
+              //imgWidth = document.getElementById('image-el').naturalWidth
+
+              //imgHeight = document.getElementById('image-el').naturalHeight
+
+              await message(`Width: ${imgWidth}px\nHeight: ${imgHeight}px`, { title: 'Image Dimensions', kind: 'info' });
+            
+
+              //await message(cmdres?.stdout, { title: 'ImageMagick Version', kind: 'info' });
             },
           }),
         ]
@@ -374,7 +412,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
               const appVersion = await getVersion();
 
-              await message(`Image Tool v${appVersion}\nCreated by Amir Hachaichi\nUses marked\ngithub.com/amirlogic/tauri-image-tool`, 
+              await message(`Image Tool v${appVersion}\nCreated by Amir Hachaichi\ngithub.com/amirlogic/tauri-image-tool`, 
                             { title: 'About', kind: 'info' });
             },
           }),
@@ -516,57 +554,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
   })();
 
-  /* document.getElementById('open-btn').addEventListener("click", (e) => {
-
-    openImage()
-  }) */
-
-  /* document.getElementById('reload-btn').addEventListener("click", (e) => {
-
-    loadImage(openedFile)
-  }) */
-
-  /* document.getElementById('edit-btn').addEventListener("click", async (e) => {
-
-    try{
-
-      await openPath(openedFile)
-
-    }
-    catch(err){
-
-      await Command.create('notepad', [
-        openedFile
-      ]).execute();
-
-    }
-    finally {
-
-      errorMessage(err)
-    }
-    
-  }) */
-
-  /* document.getElementById('nav-about').addEventListener("click", async (e) => {
-
-    await message(`Created by Amir Hachaichi\nUses marked\ngithub.com/amirlogic/tauri-apps-vanilla-js`, { title: 'About', kind: 'info' });
-
-  }) */
-
-  /* document.getElementById('nav-history').addEventListener("click", (e) => {
-
-    showHistory()
-
-  }) */
-
-
-  /* document.getElementById('nav-clear').addEventListener("click", (e) => {
-
-    document.getElementById(targetEl).innerHTML = ""
-
-    openedFile = ""
-
-  }) */
+  
 
   
 });
