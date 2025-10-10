@@ -6,7 +6,7 @@ const { join, dirname, extname } = window.__TAURI__.path;
 const { Menu, MenuItem, Submenu } = window.__TAURI__.menu;
 const { getCurrentWindow } = window.__TAURI__.window;
 
-const { open, message } = window.__TAURI__.dialog;
+const { open, message, confirm } = window.__TAURI__.dialog;
 const { Command } = window.__TAURI__.shell;
 const { openPath } = window.__TAURI__.opener;
 const { platform } = window.__TAURI__.os;
@@ -25,6 +25,16 @@ let store
 let imgWidth
 
 let imgHeight
+
+let xnwext = ''
+
+let xoper = ''
+
+let xpixels = ''
+
+let xcmd = ''
+
+let xsuffix = ''
 
 
 async function errorMessage(err){
@@ -81,15 +91,22 @@ async function loadImage(fname) {
 
   const imgext = await extname(fname)
 
+  const cont = document.getElementById(targetEl)
+
+  document.getElementById('topleft').innerText = ''
+
   try{
 
-    document.getElementById(targetEl).innerHTML = ''
+    if (cont.hasChildNodes()) {
+
+      cont.removeChild(cont.firstChild);
+    }
+
+    //document.getElementById(targetEl).innerHTML = ''
 
     if(imgext === 'svg'){
 
       const rawsvg = await readTextFile(fname)
-
-      
 
       const svg = rawsvg.substr(rawsvg.indexOf('<svg')) //rawsvg.indexOf('<svg')
 
@@ -100,6 +117,14 @@ async function loadImage(fname) {
       //document.getElementById(targetEl).appendChild(df)
 
       document.getElementById(targetEl).innerHTML = svg
+
+      const svgel = document.querySelector('#image svg')
+
+      imgHeight = svgel.height.baseVal.value
+
+      imgWidth = svgel.width.baseVal.value
+
+      document.getElementById('topleft').innerText = 'svg'
 
     }
     else{
@@ -121,6 +146,8 @@ async function loadImage(fname) {
       imgWidth = document.getElementById('image-el').naturalWidth
 
       imgHeight = document.getElementById('image-el').naturalHeight
+
+      document.getElementById('topleft').innerText = `${imgWidth}x${imgHeight}`
 
     }
 
@@ -381,6 +408,83 @@ window.addEventListener("DOMContentLoaded", () => {
         ]
       })
 
+      const actionMenu = await Submenu.new({
+        text: 'Action',
+        items: [
+          await MenuItem.new({
+              id: 'topng',
+              text: 'Convert to png',
+              action: () => {
+
+                xnwext = 'png'
+              },
+          }),
+          await MenuItem.new({
+              id: 'pix800',
+              text: '800x800 pixels',
+              action: () => {
+
+                xpixels = '800x800'
+              },
+          }),
+          await MenuItem.new({
+              id: 'exec',
+              text: 'Execute',
+              action: async () => {
+
+                //let xpreview = `${}`
+
+                
+
+                let xcmd = `magick ${xoper} ${openedFile} `
+
+                if(xpixels){
+
+                  xcmd += `-resize ${xpixels} `
+                }
+
+                
+
+                let xconf = await confirm(`Execute this?\n${xpreview}`, { title: 'Confirm execution', kind: 'warning' })
+
+                if(xconf){
+
+                  xrr = []
+
+                  try {
+                    
+                    const cmdres = await Command.create('magick', xrr).execute();
+
+                    await message(cmdres?.stdout, { title: 'ImageMagickàç', kind: 'info' });
+
+                  } catch (xerror) {
+                    
+                    errorMessage(xerror)
+                  }
+                }
+
+              },
+          }),
+          await MenuItem.new({
+              id: 'reset',
+              text: 'Reset',
+              action: async () => {
+
+                xnwext = ''
+
+                xoper = ''
+
+                xpixels = ''
+
+                xcmd = ''
+
+                xsuffix = ''
+
+              },
+          }),
+        ]
+      })
+
       const helpMenu = await Submenu.new({
         text: 'Help',
         items: [
@@ -431,6 +535,7 @@ window.addEventListener("DOMContentLoaded", () => {
                showHistory()
             },
           },
+          actionMenu,
           helpMenu
         ],
       });
