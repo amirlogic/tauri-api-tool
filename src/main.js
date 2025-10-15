@@ -139,15 +139,37 @@ async function loadImage(fname) {
 
       const imgext = await extname(fname)
 
-      const html = `<img id="image-el" alt="local image" src="data:image/${imgext};base64,${base64String}" class="d-block mx-auto" />`;
+      const imgnode = document.createElement("img")
 
-      document.getElementById(targetEl).innerHTML = html
+      imgnode.id = "image-el"
+
+      imgnode.alt = "local image"
+
+      imgnode.src = `data:image/${imgext};base64,${base64String}`
+
+      imgnode.className = "d-block mx-auto"
+
+      imgnode.addEventListener("load", () => {
+
+        //console.log("Image loaded!");
+        //console.log("Width:", imgnode.naturalWidth);
+        //console.log("Height:", imgnode.naturalHeight);
+        document.getElementById('topleft').innerText = `${imgnode.naturalWidth}x${imgnode.naturalHeight}`
+
+      });
+
+      document.getElementById(targetEl).appendChild(imgnode)
+
+      //const html = `<img id="image-el" alt="local image" src="data:image/${imgext};base64,${base64String}" class="d-block mx-auto" />`;
+      //document.getElementById(targetEl).innerHTML = html
 
       imgWidth = document.getElementById('image-el').naturalWidth
 
       imgHeight = document.getElementById('image-el').naturalHeight
 
-      document.getElementById('topleft').innerText = `${imgWidth}x${imgHeight}`
+      //console.log(imgnode.naturalWidth)
+
+      //console.log(imgnode.naturalHeight)
 
     }
 
