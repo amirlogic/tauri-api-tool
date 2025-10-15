@@ -108,23 +108,27 @@ async function loadImage(fname) {
 
       const rawsvg = await readTextFile(fname)
 
-      const svg = rawsvg.substr(rawsvg.indexOf('<svg')) //rawsvg.indexOf('<svg')
+      // SVG node
+      const parser = new DOMParser()
 
-      //let df = new DocumentFragment()
+      const svgnode = parser.parseFromString(rawsvg, "image/svg+xml")
 
-      //df.innerHTML = svg
+      const svgElement = svgnode.documentElement
 
-      //document.getElementById(targetEl).appendChild(df)
+      //const svg = rawsvg.substr(rawsvg.indexOf('<svg')) //rawsvg.indexOf('<svg')
 
-      document.getElementById(targetEl).innerHTML = svg
+      
+      document.getElementById(targetEl).appendChild(svgElement)
+
+      //document.getElementById(targetEl).innerHTML = svg
 
       const svgel = document.querySelector('#image svg')
 
-      imgHeight = svgel.height.baseVal.value
+      imgHeight = svgElement.height.baseVal.value //svgel.height.baseVal.value
 
-      imgWidth = svgel.width.baseVal.value
+      imgWidth = svgElement.width.baseVal.value//svgel.width.baseVal.value
 
-      document.getElementById('topleft').innerText = 'svg'
+      document.getElementById('topleft').innerText = `svg ${imgHeight}x${imgWidth}`
 
     }
     else{
@@ -151,10 +155,11 @@ async function loadImage(fname) {
 
       imgnode.addEventListener("load", () => {
 
-        //console.log("Image loaded!");
-        //console.log("Width:", imgnode.naturalWidth);
-        //console.log("Height:", imgnode.naturalHeight);
         document.getElementById('topleft').innerText = `${imgnode.naturalWidth}x${imgnode.naturalHeight}`
+
+        imgWidth = imgnode.naturalWidth
+
+        imgHeight = imgnode.naturalHeight
 
       });
 
@@ -162,13 +167,9 @@ async function loadImage(fname) {
 
       //const html = `<img id="image-el" alt="local image" src="data:image/${imgext};base64,${base64String}" class="d-block mx-auto" />`;
       //document.getElementById(targetEl).innerHTML = html
-
-      imgWidth = document.getElementById('image-el').naturalWidth
-
-      imgHeight = document.getElementById('image-el').naturalHeight
-
+      //imgWidth = document.getElementById('image-el').naturalWidth
+      //imgHeight = document.getElementById('image-el').naturalHeight
       //console.log(imgnode.naturalWidth)
-
       //console.log(imgnode.naturalHeight)
 
     }
