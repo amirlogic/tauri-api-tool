@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "imagetool",
-  "version": "0.1.4",
-  "identifier": "com.tauri2.app",
+  "version": "0.1.6",
+  "identifier": "com.imagetool.app",
   "build": {
     "frontendDist": "../src"
   },
