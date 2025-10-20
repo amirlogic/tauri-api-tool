@@ -36,8 +36,44 @@ let xcmd = ''
 
 let xsuffix = ''
 
+let xcombine = false
 
-async function errorMessage(err){
+
+async function shellCmd(xrr=[]){
+
+  try{
+
+    if(!openedFile){
+
+      throw "No opened file"
+      
+    }
+
+    const cmdres = await Command.create('magick', xrr).execute();
+
+    const cftxt = cmdres?.stdout || xrr[xrr.length-1]
+
+    await message(cftxt, { title: 'Operation completed', kind: 'info' });
+
+  }
+  catch(cmderr){
+
+    errorMessage(cmderr)
+  }
+}
+
+async function addSuffix(sfx=''){
+
+  if(openedFile){
+
+    const sfext = await extname(openedFile)
+
+    return openedFile.replace(`.${sfext}`,`_${sfx}.${sfext}`)
+  }
+  
+}
+
+async function errorMessage(err=''){
 
   await message(err, { title: 'Oops...', kind: 'error' });
 }
@@ -508,6 +544,139 @@ window.addEventListener("DOMContentLoaded", () => {
         ]
       })
 
+      const rotateMenu = await Submenu.new({
+        text: 'Rotate',
+        items: [
+          await MenuItem.new({
+            id: 'p90',
+            text: '+90°',
+            action: async () => {
+
+              if(openedFile){
+
+                if(!xcombine){
+
+                  const outsfx = await addSuffix('rp90')
+                  shellCmd(['convert','-rotate','90',openedFile, outsfx])
+                }
+                else{
+
+                  
+                }
+              }
+            },
+          }),
+          await MenuItem.new({
+            id: 'p180',
+            text: '+180°',
+            action: async () => {
+
+              if(openedFile){
+
+                if(!xcombine){
+
+                  const outsfx = await addSuffix('rp180')
+                  shellCmd(['convert','-rotate','180',openedFile, outsfx])
+                }
+                else{
+
+                  
+                }
+              }
+            },
+          }),
+          await MenuItem.new({
+            id: 'm90',
+            text: '-90°',
+            action: async () => {
+
+              
+            },
+          }),
+          await MenuItem.new({
+            id: 'm180',
+            text: '-180°',
+            action: async () => {
+
+              //document.body.style.backgroundColor = '#F1F1F1'
+            },
+          }),
+          await MenuItem.new({
+            id: 'test',
+            text: 'Dimensions',
+            action: async () => {
+
+              //imgWidth = document.getElementById('image-el').naturalWidth
+
+              //imgHeight = document.getElementById('image-el').naturalHeight
+
+              
+            
+
+              //await message(cmdres?.stdout, { title: 'ImageMagick Version', kind: 'info' });
+            },
+          }),
+        ]
+      })
+
+      const effectsMenu = await Submenu.new({
+        text: 'Effects',
+        items: [
+          await MenuItem.new({
+            id: 'wtr1',
+            text: 'White transparent 1% fuzz',
+            action: async () => {
+
+              try{
+
+                const cmdres = await Command.create('magick', [
+                  '-version'
+                ]).execute();
+
+                await message(cmdres?.stdout, { title: 'Operation completed', kind: 'info' });
+
+              }
+              catch(cmderr){
+
+                errorMessage(cmderr)
+              }
+            },
+          }),
+          await MenuItem.new({
+            id: 'wtr5',
+            text: 'White transparent 5% fuzz',
+            action: async () => {
+
+              //document.body.style.backgroundColor = '#F1F1F1'
+            },
+          }),
+          await MenuItem.new({
+            id: 'wtr10',
+            text: 'White transparent 10% fuzz',
+            action: async () => {
+
+              //document.body.style.backgroundColor = '#F1F1F1'
+            },
+          }),
+          /* await MenuItem.new({
+            id: 'm180',
+            text: '-180°',
+            action: async () => {
+
+              //document.body.style.backgroundColor = '#F1F1F1'
+            },
+          }),
+          await MenuItem.new({
+            id: 'test',
+            text: 'Dimensions',
+            action: async () => {
+
+             
+            },
+          }), */
+        ]
+      })
+
       const helpMenu = await Submenu.new({
         text: 'Help',
         items: [
@@ -559,6 +728,8 @@ window.addEventListener("DOMContentLoaded", () => {
             },
           },
           actionMenu,
+          rotateMenu,
+          effectsMenu,
           helpMenu
         ],
       });
