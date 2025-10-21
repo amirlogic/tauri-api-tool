@@ -4,7 +4,7 @@
 
 Built using Tauri V2
 
-[ImageMagick](https://github.com/ImageMagick/ImageMagick) V7+ is required
+[ImageMagick](https://github.com/ImageMagick/ImageMagick) v7+ is required
 
 Uses PNPM
 
