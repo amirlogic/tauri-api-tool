@@ -28,7 +28,7 @@ let imgHeight
 
 let xnwext = ''
 
-let xoper = ''
+let xoper = []
 
 let xpixels = ''
 
@@ -71,6 +71,13 @@ async function addSuffix(sfx=''){
     return openedFile.replace(`.${sfext}`,`_${sfx}.${sfext}`)
   }
   
+}
+
+async function changeExt(nwex=''){
+
+  const sfext = await extname(openedFile)
+
+  return openedFile.replace(`.${sfext}`,`.${nwex}`)
 }
 
 async function errorMessage(err=''){
@@ -201,12 +208,7 @@ async function loadImage(fname) {
 
       document.getElementById(targetEl).appendChild(imgnode)
 
-      //const html = `<img id="image-el" alt="local image" src="data:image/${imgext};base64,${base64String}" class="d-block mx-auto" />`;
-      //document.getElementById(targetEl).innerHTML = html
-      //imgWidth = document.getElementById('image-el').naturalWidth
-      //imgHeight = document.getElementById('image-el').naturalHeight
-      //console.log(imgnode.naturalWidth)
-      //console.log(imgnode.naturalHeight)
+      
 
     }
 
@@ -442,7 +444,7 @@ window.addEventListener("DOMContentLoaded", () => {
         text: 'View',
         items: [
           await MenuItem.new({
-            id: 'bgcolor',
+            id: 'bgcolorlight',
             text: 'Background Color: Light Gray',
             action: async () => {
 
@@ -450,18 +452,11 @@ window.addEventListener("DOMContentLoaded", () => {
             },
           }),
           await MenuItem.new({
-            id: 'test',
-            text: 'Dimensions',
+            id: 'bgcolordark',
+            text: 'Background Color: Dark',
             action: async () => {
 
-              //imgWidth = document.getElementById('image-el').naturalWidth
-
-              //imgHeight = document.getElementById('image-el').naturalHeight
-
-              await message(`Width: ${imgWidth}px\nHeight: ${imgHeight}px`, { title: 'Image Dimensions', kind: 'info' });
-            
-
-              //await message(cmdres?.stdout, { title: 'ImageMagick Version', kind: 'info' });
+              document.body.style.backgroundColor = '#000000'
             },
           }),
         ]
@@ -471,19 +466,19 @@ window.addEventListener("DOMContentLoaded", () => {
         text: 'Action',
         items: [
           await MenuItem.new({
-              id: 'topng',
-              text: 'Convert to png',
+              id: 'combineon',
+              text: 'Combine: On',
               action: () => {
 
-                xnwext = 'png'
+                xcombine = true
               },
           }),
           await MenuItem.new({
-              id: 'pix800',
-              text: '800x800 pixels',
+              id: 'combineoff',
+              text: 'Combine: Off',
               action: () => {
 
-                xpixels = '800x800'
+                xcombine = false
               },
           }),
           await MenuItem.new({
@@ -495,26 +490,29 @@ window.addEventListener("DOMContentLoaded", () => {
 
                 
 
-                let xcmd = `magick ${xoper} ${openedFile} `
+                // let xcmd = `magick ${xoper} ${openedFile} `
 
-                if(xpixels){
+                // if(xpixels){
 
-                  xcmd += `-resize ${xpixels} `
-                }
+                //   xcmd += `-resize ${xpixels} `
+                // }
 
                 
 
-                let xconf = await confirm(`Execute this?\n${xpreview}`, { title: 'Confirm execution', kind: 'warning' })
+                let xconf = await confirm(`Execute this?\n\nFormat: ${xnwext}\nSize: ${xpixels}\n\n`, 
+                                          { title: 'Confirm execution', kind: 'warning' })
 
-                if(xconf){
+                if(xconf && xcombine){
 
                   xrr = []
 
                   try {
                     
-                    const cmdres = await Command.create('magick', xrr).execute();
+                    //const cmdres = await Command.create('magick', xrr).execute();
 
-                    await message(cmdres?.stdout, { title: 'ImageMagickàç', kind: 'info' });
+                    shellCmd([])
+
+                    //await message(cmdres?.stdout, { title: 'ImageMagick', kind: 'info' });
 
                   } catch (xerror) {
                     
@@ -531,7 +529,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
                 xnwext = ''
 
-                xoper = ''
+                xoper = []
 
                 xpixels = ''
 
@@ -602,20 +600,48 @@ window.addEventListener("DOMContentLoaded", () => {
             },
           }),
           await MenuItem.new({
-            id: 'test',
-            text: 'Dimensions',
+            id: 'autorotate',
+            text: 'Auto orient',
             action: async () => {
 
-              //imgWidth = document.getElementById('image-el').naturalWidth
-
-              //imgHeight = document.getElementById('image-el').naturalHeight
-
               
-            
-
-              //await message(cmdres?.stdout, { title: 'ImageMagick Version', kind: 'info' });
             },
           }),
+        ]
+      })
+
+      const exportMenu = await Submenu.new({
+        text: 'Export',
+        items: [
+          await MenuItem.new({
+            id: 'topng',
+            text: 'to PNG',
+            action: async () => {
+
+              if(openedFile){
+
+                if(!xcombine){
+
+                  const outx = await changeExt('png')
+                  shellCmd([openedFile, outx])
+                }
+                else{
+
+                  xnwext = 'png'
+                }
+              }
+            },
+          }),
+          await MenuItem.new({
+            id: 'tojpg',
+            text: 'to JPG',
+            action: async () => {
+
+              
+            },
+          }),
+          
+         
         ]
       })
 
@@ -658,22 +684,7 @@ window.addEventListener("DOMContentLoaded", () => {
               //document.body.style.backgroundColor = '#F1F1F1'
             },
           }),
-          /* await MenuItem.new({
-            id: 'm180',
-            text: '-180°',
-            action: async () => {
-
-              //document.body.style.backgroundColor = '#F1F1F1'
-            },
-          }),
-          await MenuItem.new({
-            id: 'test',
-            text: 'Dimensions',
-            action: async () => {
-
-             
-            },
-          }), */
+         
         ]
       })
 
@@ -728,6 +739,7 @@ window.addEventListener("DOMContentLoaded", () => {
             },
           },
           actionMenu,
+          exportMenu,
           rotateMenu,
           effectsMenu,
           helpMenu
