@@ -38,6 +38,8 @@ let xsuffix = ''
 
 let xcombine = false
 
+let scale = 1
+
 
 async function shellCmd(xrr=[]){
 
@@ -160,12 +162,12 @@ async function loadImage(fname) {
 
       //const svg = rawsvg.substr(rawsvg.indexOf('<svg')) //rawsvg.indexOf('<svg')
 
+      svgElement.id = "svg-el"
       
       document.getElementById(targetEl).appendChild(svgElement)
 
       //document.getElementById(targetEl).innerHTML = svg
-
-      const svgel = document.querySelector('#image svg')
+      //const svgel = document.querySelector('#image svg')
 
       imgHeight = svgElement.height.baseVal.value //svgel.height.baseVal.value
 
@@ -227,105 +229,7 @@ async function loadImage(fname) {
     errorMessage(err)
   }
 
-  try{
-
-    const filedir = await dirname(fname)
-
-    /* const mdlinks = document.querySelectorAll("a[href]")
-
-    mdlinks.forEach((lnk) => {
-
-      lnk.addEventListener("click", async (e)=>{
-
-        e.preventDefault()
-
-        try{
-
-        
-
-          if(lnk?.href.indexOf('http') === 0 ){
-
-            if(lnk.href.indexOf('.md') !== -1 ){
-
-              const url = new URL(lnk.href)
-
-              const targetmd = await join(filedir, decodeURI(url.pathname))
-
-              //await message(targetmd, { title: 'link', kind: 'info' });
-
-              await loadImage(targetmd)
-            }
-            else{
-
-              await message("Righ-click on the link to copy", { title: 'link', kind: 'info' });
-            }
-
-          }
-        }
-        catch(evrr){
-
-          errorMessage(evrr)
-        }
-
-      }, false)
-    }) */
-
-    /* const imgs = document.querySelectorAll("img")
-
-    imgs.forEach(async (img) => {
-
-      try{
-
-        const url = new URL(img.src)
-
-        if(url.host == "127.0.0.1:1430" || url.host == "tauri.localhost"){
-
-          const localimg = await join(filedir, decodeURI(url.pathname))
-
-          const fileExists = await exists(localimg)
-
-          if(fileExists){
-
-            const imgbytes = await readFile(localimg)
-
-            const base64String = btoa(
-              Array.from(imgbytes)
-                .map(byte => String.fromCharCode(byte))
-                .join('')
-            )
-
-            const imgext = await extname(localimg)
-
-            img.src = `data:image/${imgext};base64,${base64String}`;
-
-            
-          }
-          else{
-
-            img.alt = "Image NOT found!"
-          }
-          
-        }
-        else{
-
-          img.alt = url
-        }
-
-      }
-      catch(imgrr){
-
-        errorMessage(imgrr)
-      }
-      
-
-
-    }) */
-
-  }
-  catch(err){
-
-    errorMessage(err)
-  }
+  
 
 }
 
@@ -415,9 +319,9 @@ window.addEventListener("DOMContentLoaded", () => {
 
                   const cmdres = await Command.create('magick', [
                     'identify', '-verbose', `${openedFile}`
-                  ]).execute();
+                  ]).execute()
 
-                  await message(cmdres?.stdout, { title: 'ImageMagick Metadata', kind: 'info' }); //.length+cmdres?.stderr
+                  await message(cmdres?.stdout, { title: 'ImageMagick Metadata', kind: 'info' })
                 }
 
               }
@@ -457,6 +361,50 @@ window.addEventListener("DOMContentLoaded", () => {
             action: async () => {
 
               document.body.style.backgroundColor = '#000000'
+            },
+          }),
+          await MenuItem.new({
+            id: 'zoomin',
+            text: 'Zoom In',
+            action: async () => {
+
+              //document.body.style.backgroundColor = '#000000'
+            },
+          }),
+          await MenuItem.new({
+            id: 'zoomout',
+            text: 'Zoom Out',
+            action: async () => {
+
+              if(document.getElementById('image-el')){
+
+                document.getElementById('image-el').style.transform = 'scale(0.75)'
+                document.getElementById('image-el').style.transformOrigin = 'center'
+              }
+              else if(document.getElementById('svg-el')){
+
+                document.getElementById('svg-el').style.transform = 'scale(0.75)'
+                document.getElementById('svg-el').style.transformOrigin = 'center'
+              }
+            },
+          }),
+          await MenuItem.new({
+            id: 'resetview',
+            text: 'Reset',
+            action: async () => {
+
+              if(document.getElementById('image-el')){
+
+                document.getElementById('image-el').style.transform = 'scale(1)'
+                
+                scale = 1
+              }
+              else if(document.getElementById('svg-el')){
+
+                document.getElementById('svg-el').style.transform = 'scale(1)'
+                
+                scale = 1
+              }
             },
           }),
         ]
