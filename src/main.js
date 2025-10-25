@@ -435,31 +435,66 @@ window.addEventListener("DOMContentLoaded", () => {
               action: async () => {
 
                 //let xpreview = `${}`
-
-                
-
                 // let xcmd = `magick ${xoper} ${openedFile} `
-
                 // if(xpixels){
-
                 //   xcmd += `-resize ${xpixels} `
                 // }
 
-                
-
-                let xconf = await confirm(`Execute this?\n\nFormat: ${xnwext}\nSize: ${xpixels}\n\n`, 
+                let xconf = await confirm(`Execute this?\n\nFormat: ${xnwext}\nSize: ${xpixels}\nExtra: ${xoper.join(' ')}\n\n`, 
                                           { title: 'Confirm execution', kind: 'warning' })
 
                 if(xconf && xcombine){
 
-                  xrr = []
+                  let xrr = [openedFile]
+
+                  let sfx = ''
 
                   try {
                     
-                    //const cmdres = await Command.create('magick', xrr).execute();
+                    // resize
+                    if(xpixels){
 
-                    shellCmd([])
+                      xrr.push(...['-resize',xpixels])
 
+                      sfx += `_${xpixels}`
+                    }
+
+                    if(xoper){
+
+                        xrr.push(...xoper)
+
+                        sfx += `_m`
+                    }
+                   
+                    // output file
+                    if(xnwext && sfx){
+
+                      const sfext = await extname(openedFile)
+
+                      const outx = openedFile.replace(`.${sfext}`,`_${sfx}.${xnwext}`)
+
+                      xrr.push(outx)
+                      
+                    }
+                    else if(sfx){
+
+                      const outx = await addSuffix(sfx)
+
+                      xrr.push(outx)
+
+                    }
+                    else if(xnwext){
+
+                      const outx = await changeExt(xnwext)
+
+                      xrr.push(outx)
+                    }
+
+                    if(xrr.length > 1){
+                      
+                      shellCmd(xrr)
+                    }
+                    
                     //await message(cmdres?.stdout, { title: 'ImageMagick', kind: 'info' });
 
                   } catch (xerror) {
@@ -601,18 +636,18 @@ window.addEventListener("DOMContentLoaded", () => {
             text: 'White transparent 1% fuzz',
             action: async () => {
 
-              try{
+              if(openedFile){
 
-                const cmdres = await Command.create('magick', [
-                  '-version'
-                ]).execute();
+                if(!xcombine){
 
-                await message(cmdres?.stdout, { title: 'Operation completed', kind: 'info' });
+                  const outx = await addSuffix('_whtrsp')
+                  shellCmd([openedFile, '-fuzz','1%','-transparent','white', outx])
+                }
+                else{
 
-              }
-              catch(cmderr){
-
-                errorMessage(cmderr)
+                  xoper.push(...['-fuzz','1%','-transparent','white'])
+                  
+                }
               }
             },
           }),
