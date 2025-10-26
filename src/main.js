@@ -3,7 +3,7 @@
 const { exists, BaseDirectory, readTextFile, readFile } = window.__TAURI__.fs;
 const { getVersion } = window.__TAURI__.app
 const { join, dirname, extname } = window.__TAURI__.path;
-const { Menu, MenuItem, Submenu } = window.__TAURI__.menu;
+const { Menu, MenuItem, Submenu, PredefinedMenuItem } = window.__TAURI__.menu;
 const { getCurrentWindow } = window.__TAURI__.window;
 
 const { open, message, confirm } = window.__TAURI__.dialog;
@@ -32,7 +32,7 @@ let xoper = []
 
 let xpixels = ''
 
-let xcmd = ''
+//let xcmd = ''
 
 let xsuffix = ''
 
@@ -363,17 +363,34 @@ window.addEventListener("DOMContentLoaded", () => {
               document.body.style.backgroundColor = '#000000'
             },
           }),
-          await MenuItem.new({
-            id: 'zoomin',
-            text: 'Zoom In',
-            action: async () => {
-
-              //document.body.style.backgroundColor = '#000000'
-            },
+          await PredefinedMenuItem.new({
+            text: 'separator-text',
+            item: 'Separator',
           }),
           await MenuItem.new({
-            id: 'zoomout',
-            text: 'Zoom Out',
+            id: 'zoomin125',
+            text: 'Zoom In 125%',
+            action: async () => {
+
+              if(document.getElementById('image-el')){
+
+                document.getElementById('image-el').style.transform = 'scale(1.25)'
+                document.getElementById('image-el').style.transformOrigin = 'center'
+              }
+              else if(document.getElementById('svg-el')){
+
+                document.getElementById('svg-el').style.transform = 'scale(1.25)'
+                document.getElementById('svg-el').style.transformOrigin = 'center'
+              }
+            },
+          }),
+          await PredefinedMenuItem.new({
+            text: 'separator-text',
+            item: 'Separator',
+          }),
+          await MenuItem.new({
+            id: 'zoomout75',
+            text: 'Zoom Out 75%',
             action: async () => {
 
               if(document.getElementById('image-el')){
@@ -387,6 +404,44 @@ window.addEventListener("DOMContentLoaded", () => {
                 document.getElementById('svg-el').style.transformOrigin = 'center'
               }
             },
+          }),
+          await MenuItem.new({
+            id: 'zoomout50',
+            text: 'Zoom Out 50%',
+            action: async () => {
+
+              if(document.getElementById('image-el')){
+
+                document.getElementById('image-el').style.transform = 'scale(0.5)'
+                document.getElementById('image-el').style.transformOrigin = 'center'
+              }
+              else if(document.getElementById('svg-el')){
+
+                document.getElementById('svg-el').style.transform = 'scale(0.5)'
+                document.getElementById('svg-el').style.transformOrigin = 'center'
+              }
+            }
+          }),
+          await MenuItem.new({
+            id: 'zoomout25',
+            text: 'Zoom Out 25%',
+            action: async () => {
+
+              if(document.getElementById('image-el')){
+
+                document.getElementById('image-el').style.transform = 'scale(0.25)'
+                document.getElementById('image-el').style.transformOrigin = 'center'
+              }
+              else if(document.getElementById('svg-el')){
+
+                document.getElementById('svg-el').style.transform = 'scale(0.25)'
+                document.getElementById('svg-el').style.transformOrigin = 'center'
+              }
+            }
+          }),
+          await PredefinedMenuItem.new({
+            text: 'separator-text',
+            item: 'Separator',
           }),
           await MenuItem.new({
             id: 'resetview',
@@ -429,16 +484,15 @@ window.addEventListener("DOMContentLoaded", () => {
                 xcombine = false
               },
           }),
+          await PredefinedMenuItem.new({
+            text: 'separator-text',
+            item: 'Separator',
+          }),
           await MenuItem.new({
               id: 'exec',
               text: 'Execute',
               action: async () => {
 
-                //let xpreview = `${}`
-                // let xcmd = `magick ${xoper} ${openedFile} `
-                // if(xpixels){
-                //   xcmd += `-resize ${xpixels} `
-                // }
 
                 let xconf = await confirm(`Execute this?\n\nFormat: ${xnwext}\nSize: ${xpixels}\nExtra: ${xoper.join(' ')}\n\n`, 
                                           { title: 'Confirm execution', kind: 'warning' })
@@ -516,10 +570,35 @@ window.addEventListener("DOMContentLoaded", () => {
 
                 xpixels = ''
 
-                xcmd = ''
+                //xcmd = ''
 
                 xsuffix = ''
 
+              },
+          }),
+        ]
+      })
+
+      const resizeMenu = await Submenu.new({
+        text: 'Resize',
+        items: [
+          await MenuItem.new({
+              id: '800x800',
+              text: '800x800',
+              action: async () => {
+
+                if(openedFile){
+
+                  if(!xcombine){
+
+                    const outsfx = await addSuffix('800x800')
+                    shellCmd([openedFile,'-resize','800x800',outsfx])
+                  }
+                  else{
+
+                    
+                  }
+                }
               },
           }),
         ]
@@ -566,6 +645,10 @@ window.addEventListener("DOMContentLoaded", () => {
               }
             },
           }),
+          await PredefinedMenuItem.new({
+            text: 'separator-text',
+            item: 'Separator',
+          }),
           await MenuItem.new({
             id: 'm90',
             text: '-90°',
@@ -581,6 +664,10 @@ window.addEventListener("DOMContentLoaded", () => {
 
               //document.body.style.backgroundColor = '#F1F1F1'
             },
+          }),
+          await PredefinedMenuItem.new({
+            text: 'separator-text',
+            item: 'Separator',
           }),
           await MenuItem.new({
             id: 'autorotate',
@@ -723,6 +810,7 @@ window.addEventListener("DOMContentLoaded", () => {
           },
           actionMenu,
           exportMenu,
+          resizeMenu,
           rotateMenu,
           effectsMenu,
           helpMenu
