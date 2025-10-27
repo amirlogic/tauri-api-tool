@@ -3,7 +3,7 @@
 const { exists, BaseDirectory, readTextFile, readFile } = window.__TAURI__.fs;
 const { getVersion } = window.__TAURI__.app
 const { join, dirname, extname } = window.__TAURI__.path;
-const { Menu, MenuItem, Submenu, PredefinedMenuItem } = window.__TAURI__.menu;
+const { Menu, MenuItem, Submenu, PredefinedMenuItem, CheckMenuItem } = window.__TAURI__.menu;
 const { getCurrentWindow } = window.__TAURI__.window;
 
 const { open, message, confirm } = window.__TAURI__.dialog;
@@ -85,6 +85,17 @@ async function changeExt(nwex=''){
 async function errorMessage(err=''){
 
   await message(err, { title: 'Oops...', kind: 'error' });
+}
+
+async function updateRecentMenu(){
+
+  history.forEach((hitem)=>{
+
+    recent_menu.items.push({id:hitem,text:hitem})
+  })
+
+  // Update menu?
+  //await menu.setAsAppMenu()
 }
 
 /* async function storeFileName(fname){
@@ -217,6 +228,7 @@ async function loadImage(fname) {
     if(history.indexOf(fname) == -1){
 
       history.push(fname)
+      updateRecentMenu()
     }
 
     openedFile = fname
@@ -499,25 +511,34 @@ window.addEventListener("DOMContentLoaded", () => {
         ]
       })
 
-      const actionMenu = await Submenu.new({
-        text: 'Action',
-        items: [
-          await MenuItem.new({
+
+      const check_sub_item_combine_on = await CheckMenuItem.new({
               id: 'combineon',
-              text: 'Combine: On',
+              text: 'Combine: ON',
+              checked: xcombine,
               action: () => {
 
                 xcombine = true
+                check_sub_item_combine_off.setChecked(!xcombine)
               },
-          }),
-          await MenuItem.new({
+          })
+
+      const check_sub_item_combine_off = await CheckMenuItem.new({
               id: 'combineoff',
-              text: 'Combine: Off',
+              text: 'Combine: OFF',
+              checked: !xcombine,
               action: () => {
 
                 xcombine = false
+                check_sub_item_combine_on.setChecked(xcombine)
               },
-          }),
+          })
+
+      const actionMenu = await Submenu.new({
+        text: 'Action',
+        items: [
+          check_sub_item_combine_on,
+          check_sub_item_combine_off,
           await PredefinedMenuItem.new({
             text: 'separator-text',
             item: 'Separator',
@@ -830,18 +851,24 @@ window.addEventListener("DOMContentLoaded", () => {
         ]
       })
 
+      let recent_menu = {
+            id: 'recent',
+            text: 'Recent',
+            items:[
+
+              {id: 'r1',text:'Item 1'}
+            ],
+            // action: () => {
+              
+            //    showHistory()
+            // },
+          }
+
       const menu = await Menu.new({
         items: [
           fileMenu,
           viewMenu,
-          {
-            id: 'recent',
-            text: 'Recent',
-            action: () => {
-              
-               showHistory()
-            },
-          },
+          recent_menu,
           actionMenu,
           exportMenu,
           resizeMenu,
