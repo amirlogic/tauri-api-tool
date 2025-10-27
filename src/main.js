@@ -169,9 +169,9 @@ async function loadImage(fname) {
       //document.getElementById(targetEl).innerHTML = svg
       //const svgel = document.querySelector('#image svg')
 
-      imgHeight = svgElement.height.baseVal.value //svgel.height.baseVal.value
+      imgHeight = svgElement.height.baseVal.value
 
-      imgWidth = svgElement.width.baseVal.value//svgel.width.baseVal.value
+      imgWidth = svgElement.width.baseVal.value
 
       document.getElementById('topleft').innerText = `svg ${imgHeight}x${imgWidth}`
 
@@ -368,6 +368,40 @@ window.addEventListener("DOMContentLoaded", () => {
             item: 'Separator',
           }),
           await MenuItem.new({
+            id: 'zoomin175',
+            text: 'Zoom In 175%',
+            action: async () => {
+
+              if(document.getElementById('image-el')){
+
+                document.getElementById('image-el').style.transform = 'scale(1.75)'
+                document.getElementById('image-el').style.transformOrigin = 'center'
+              }
+              else if(document.getElementById('svg-el')){
+
+                document.getElementById('svg-el').style.transform = 'scale(1.75)'
+                document.getElementById('svg-el').style.transformOrigin = 'center'
+              }
+            },
+          }),
+          await MenuItem.new({
+            id: 'zoomin150',
+            text: 'Zoom In 150%',
+            action: async () => {
+
+              if(document.getElementById('image-el')){
+
+                document.getElementById('image-el').style.transform = 'scale(1.5)'
+                document.getElementById('image-el').style.transformOrigin = 'center'
+              }
+              else if(document.getElementById('svg-el')){
+
+                document.getElementById('svg-el').style.transform = 'scale(1.5)'
+                document.getElementById('svg-el').style.transformOrigin = 'center'
+              }
+            },
+          }),
+          await MenuItem.new({
             id: 'zoomin125',
             text: 'Zoom In 125%',
             action: async () => {
@@ -494,7 +528,7 @@ window.addEventListener("DOMContentLoaded", () => {
               action: async () => {
 
 
-                let xconf = await confirm(`Execute this?\n\nFormat: ${xnwext}\nSize: ${xpixels}\nExtra: ${xoper.join(' ')}\n\n`, 
+                let xconf = await confirm(`Export with these changes?\n\nFormat: ${xnwext}\nSize: ${xpixels}\nExtra: ${xoper.join(' ')}\n${xcombine ? '' : "\nCombine is Off!"}\n`, 
                                           { title: 'Confirm execution', kind: 'warning' })
 
                 if(xconf && xcombine){
