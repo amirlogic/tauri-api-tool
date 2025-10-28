@@ -89,13 +89,19 @@ async function errorMessage(err=''){
 
 async function updateRecentMenu(){
 
-  history.forEach((hitem)=>{
+  const recentMenu = await menu.get('recent')
 
-    recent_menu.items.push({id:hitem,text:hitem})
+  history.forEach(async (hitem,indx)=>{
+
+    const recentItem = await recentMenu.get(`r${indx}`)
+
+    if(recentItem){
+
+      await recentItem.setText(hitem)
+    }
+
   })
 
-  // Update menu?
-  //await menu.setAsAppMenu()
 }
 
 /* async function storeFileName(fname){
@@ -227,7 +233,7 @@ async function loadImage(fname) {
 
     if(history.indexOf(fname) == -1){
 
-      history.push(fname)
+      history.splice(0,0,fname)
       updateRecentMenu()
     }
 
@@ -268,6 +274,7 @@ async function openImage() {
   }
 }
 
+let menu
 
 
 window.addEventListener("DOMContentLoaded", () => {
@@ -856,15 +863,21 @@ window.addEventListener("DOMContentLoaded", () => {
             text: 'Recent',
             items:[
 
-              {id: 'r1',text:'Item 1'}
-            ],
-            // action: () => {
-              
-            //    showHistory()
-            // },
+              {id: 'r0',text:'-', action:()=>{ loadImage(history[0]) }},
+              {id: 'r1',text:'-', action:()=>{ loadImage(history[1]) }},
+              {id: 'r2',text:'-', action:()=>{ loadImage(history[2]) }},
+              {id: 'r3',text:'-', action:()=>{ loadImage(history[3]) }},
+              {id: 'r4',text:'-', action:()=>{ loadImage(history[4]) }},
+              {id: 'r5',text:'-', action:()=>{ loadImage(history[5]) }},
+              {id: 'r6',text:'-', action:()=>{ loadImage(history[6]) }},
+              {id: 'r7',text:'-', action:()=>{ loadImage(history[7]) }},
+              {id: 'r8',text:'-', action:()=>{ loadImage(history[8]) }},
+              {id: 'r9',text:'-', action:()=>{ loadImage(history[9]) }}
+            ]
+            
           }
 
-      const menu = await Menu.new({
+      menu = await Menu.new({
         items: [
           fileMenu,
           viewMenu,
