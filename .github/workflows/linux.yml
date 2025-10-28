@@ -40,7 +40,7 @@ jobs:
              libglib2.0-dev \
              libcairo2-dev \
              libwebkit2gtk-4.0-dev \
-             libjavascriptcoregtk-4.0-dev \
+             libjavascriptcoregtk-4.1-dev \
              libsoup-3.0-dev
 
       - name: Update Cargo dependencies
@@ -50,8 +50,6 @@ jobs:
           cargo clean
 
       - name: Build Tauri app
-        env:
-          JSC_SYS_JSCORE_VERSION: "4.0"
         run: pnpm tauri build
 
       - name: Upload Tauri build artifacts
