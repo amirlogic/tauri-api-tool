@@ -663,6 +663,25 @@ window.addEventListener("DOMContentLoaded", () => {
                 }
               },
           }),
+          await MenuItem.new({
+              id: 'halfsize',
+              text: '50%',
+              action: async () => {
+
+                if(openedFile){
+
+                  if(!xcombine){
+
+                    const outsfx = await addSuffix('halfsize')
+                    shellCmd([openedFile,'-resize','50%',outsfx])
+                  }
+                  else{
+
+                    
+                  }
+                }
+              },
+          }),
         ]
       })
 
@@ -765,11 +784,42 @@ window.addEventListener("DOMContentLoaded", () => {
             },
           }),
           await MenuItem.new({
+            id: 'topngwhtrp',
+            text: 'to PNG White Transparent Fz5%',
+            action: async () => {
+
+              if(openedFile){
+
+                if(!xcombine){
+
+                  const outx = await changeExt('png')
+                  shellCmd([openedFile, '-fuzz','5%','-transparent','white', outx])
+                }
+                else{
+
+                  xnwext = 'png'
+                  xoper.push(...['-fuzz','5%','-transparent','white'])
+                }
+              }
+            },
+          }),
+          await MenuItem.new({
             id: 'tojpg',
             text: 'to JPG',
             action: async () => {
 
-              
+              if(openedFile){
+
+                if(!xcombine){
+
+                  const outx = await changeExt('jpg')
+                  shellCmd([openedFile, outx])
+                }
+                else{
+
+                  xnwext = 'jpg'
+                }
+              }
             },
           }),
           
@@ -805,7 +855,19 @@ window.addEventListener("DOMContentLoaded", () => {
             text: 'White transparent 5% fuzz',
             action: async () => {
 
-              //document.body.style.backgroundColor = '#F1F1F1'
+              if(openedFile){
+
+                if(!xcombine){
+
+                  const outx = await addSuffix('_whtrsp')
+                  shellCmd([openedFile, '-fuzz','5%','-transparent','white', outx])
+                }
+                else{
+
+                  xoper.push(...['-fuzz','5%','-transparent','white'])
+                  
+                }
+              }
             },
           }),
           await MenuItem.new({
@@ -813,10 +875,101 @@ window.addEventListener("DOMContentLoaded", () => {
             text: 'White transparent 10% fuzz',
             action: async () => {
 
-              //document.body.style.backgroundColor = '#F1F1F1'
+              if(openedFile){
+
+                if(!xcombine){
+
+                  const outx = await addSuffix('_whtrsp')
+                  shellCmd([openedFile, '-fuzz','10%','-transparent','white', outx])
+                }
+                else{
+
+                  xoper.push(...['-fuzz','10%','-transparent','white'])
+                  
+                }
+              }
             },
           }),
-         
+          await MenuItem.new({
+            id: 'grayscale',
+            text: 'Grayscale',
+            action: async () => {
+
+              if(openedFile){
+
+                if(!xcombine){
+
+                  const outx = await addSuffix('_grayscale')
+                  shellCmd([openedFile, '-colorspace','Gray', outx])
+                }
+                else{
+
+                  xoper.push(...['-colorspace','Gray'])
+                  
+                }
+              }
+            },
+          }),
+          await MenuItem.new({
+            id: 'flip',
+            text: 'Flip', // vertical flip
+            action: async () => {
+
+              if(openedFile){
+
+                if(!xcombine){
+
+                  const outx = await addSuffix('_flipped')
+                  shellCmd([openedFile, '-flip', outx])
+                }
+                else{
+
+                  xoper.push('-flip')
+                  
+                }
+              }
+            },
+          }),
+          await MenuItem.new({
+            id: 'charcoal',
+            text: 'Charcoal',
+            action: async () => {
+
+              if(openedFile){
+
+                if(!xcombine){
+
+                  const outx = await addSuffix('_charcoal')
+                  shellCmd([openedFile, '-charcoal', '1.2', outx])
+                }
+                else{
+
+                  xoper.push(...['-charcoal','1.2'])
+                  
+                }
+              }
+            },
+          }),
+          await MenuItem.new({
+            id: 'negate',
+            text: 'Negate',
+            action: async () => {
+
+              if(openedFile){
+
+                if(!xcombine){
+
+                  const outx = await addSuffix('_negate')
+                  shellCmd([openedFile, '-negate', outx])
+                }
+                else{
+
+                  xoper.push('-negate')
+                  
+                }
+              }
+            },
+          }),
         ]
       })
 
