@@ -61,7 +61,7 @@ The semicolon after the 2 IIFEs inside the DOMContentLoaded event listener are n
 
 ### Features
 
-- Open and view images without 
+- Open and view images
 
 - Modify images using commands sent to ImageMagick
 
