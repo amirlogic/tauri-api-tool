@@ -1,17 +1,18 @@
 # Image Tool
 
+Image viewer and editor designed to be lightweight, fast and customizable
 
+[ImageMagick](https://github.com/ImageMagick/ImageMagick) v7+ is required for editing
 
-Built using Tauri V2
-
-[ImageMagick](https://github.com/ImageMagick/ImageMagick) v7+ is required
-
-Uses PNPM
 
 
 ## Notes
 
 ### Dev
+
+Built using Tauri V2
+
+Uses PNPM
 
 To pass command line arguments to dev: `pnpm tauri dev -- -- <arguments>`
 
@@ -60,12 +61,12 @@ The semicolon after the 2 IIFEs inside the DOMContentLoaded event listener are n
 
 ### Features
 
-- Implement Open With using CLI ✅
+- Open and view images
 
-- Filename as Positional argument ✅
+- Modify images using commands sent to ImageMagick
 
-- The app launches when using CMD: `start markdown://open-file?payload=C:/Users/you/Documents/example.md`
 
-- Deep link received when using `getCurrent()` ✅
 
-- Add Menu items using Window plugin ✅
+
+
+
