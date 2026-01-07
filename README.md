@@ -39,8 +39,10 @@ pnpm tauri add opener
 pnpm tauri add os
 pnpm tauri add deep-link
 pnpm tauri add cli
+pnpm tauri add sql
 ```
 
+Also for SQLite: `cargo add tauri-plugin-sql --features sqlite`
 
 ### Linux
 
