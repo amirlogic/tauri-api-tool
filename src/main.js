@@ -12,6 +12,7 @@ const { openPath } = window.__TAURI__.opener;
 const { platform } = window.__TAURI__.os;
 const { getCurrent } = window.__TAURI__.deepLink   // onOpenUrl
 const { getMatches } = window.__TAURI__.cli;
+const Database = window.__TAURI__.sql
 
 
 let openedFile
