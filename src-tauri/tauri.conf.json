@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "imagetool",
-  "version": "0.2.0",
-  "identifier": "com.imagetool.app",
+  "productName": "videoproject",
+  "version": "0.1.0",
+  "identifier": "com.videoproject.app",
   "build": {
     "frontendDist": "../src"
   },
@@ -10,7 +10,7 @@
     "withGlobalTauri": true,
     "windows": [
       {
-        "title": "Image Tool",
+        "title": "Video Project",
         "width": 880,
         "height": 660
       }

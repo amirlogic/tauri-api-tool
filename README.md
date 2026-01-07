@@ -1,8 +1,8 @@
-# Image Tool
+# Video Project
 
-Image viewer and editor designed to be lightweight, fast and customizable
+Video Project Manager
 
-[ImageMagick](https://github.com/ImageMagick/ImageMagick) v7+ is required for editing
+
 
 
 
