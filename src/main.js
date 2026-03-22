@@ -353,7 +353,7 @@ window.addEventListener("DOMContentLoaded", () => {
         ]
       })
 
-      const viewMenu = await Submenu.new({
+      /* const viewMenu = await Submenu.new({
         text: 'View',
         items: [
           await MenuItem.new({
@@ -392,9 +392,9 @@ window.addEventListener("DOMContentLoaded", () => {
           
         ]
       })
+ */
 
-
-      const check_sub_item_combine_on = await CheckMenuItem.new({
+      /* const check_sub_item_combine_on = await CheckMenuItem.new({
               id: 'combineon',
               text: 'Combine: ON',
               checked: xcombine,
@@ -414,9 +414,9 @@ window.addEventListener("DOMContentLoaded", () => {
                 xcombine = false
                 check_sub_item_combine_on.setChecked(xcombine)
               },
-          })
+          }) */
 
-      const actionMenu = await Submenu.new({
+      /* const actionMenu = await Submenu.new({
         text: 'Action',
         items: [
           check_sub_item_combine_on,
@@ -514,9 +514,9 @@ window.addEventListener("DOMContentLoaded", () => {
               },
           }),
         ]
-      })
+      }) */
 
-      const resizeMenu = await Submenu.new({
+      /* const resizeMenu = await Submenu.new({
         text: 'Resize',
         items: [
           await MenuItem.new({
@@ -540,9 +540,9 @@ window.addEventListener("DOMContentLoaded", () => {
           }),
           
         ]
-      })
+      }) */
 
-      const rotateMenu = await Submenu.new({
+      /* const rotateMenu = await Submenu.new({
         text: 'Rotate',
         items: [
           await MenuItem.new({
@@ -586,9 +586,9 @@ window.addEventListener("DOMContentLoaded", () => {
           
           
         ]
-      })
+      }) */
 
-      const exportMenu = await Submenu.new({
+      /* const exportMenu = await Submenu.new({
         text: 'Export',
         items: [
           await MenuItem.new({
@@ -652,9 +652,9 @@ window.addEventListener("DOMContentLoaded", () => {
           
          
         ]
-      })
+      }) */
 
-      const effectsMenu = await Submenu.new({
+      /* const effectsMenu = await Submenu.new({
         text: 'Effects',
         items: [
           await MenuItem.new({
@@ -760,12 +760,12 @@ window.addEventListener("DOMContentLoaded", () => {
           
           
         ]
-      })
+      }) */
 
       const helpMenu = await Submenu.new({
         text: 'Help',
         items: [
-          await MenuItem.new({
+          /* await MenuItem.new({
             id: 'magickv',
             text: 'ImageMagick Version',
             action: async () => {
@@ -785,7 +785,7 @@ window.addEventListener("DOMContentLoaded", () => {
               }
               
             },
-          }),
+          }), */
           await MenuItem.new({
             id: 'about',
             text: 'About',
