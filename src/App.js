@@ -2,7 +2,6 @@ const { h, render } = window.preact;
 const { useState, useEffect } = window.preactHooks;
 const html = window.htm.bind(h);
 
-//const html = htm.bind(h);
 
 function App() {
   const [count, setCount] = useState(0);

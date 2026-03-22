@@ -63,9 +63,9 @@ The semicolon after the 2 IIFEs inside the DOMContentLoaded event listener are n
 
 ### Features
 
-- Open and view images
+- Remotion projects file generator
 
-- Modify images using commands sent to ImageMagick
+- 
 
 
 

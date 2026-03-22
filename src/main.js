@@ -339,29 +339,7 @@ window.addEventListener("DOMContentLoaded", () => {
               }
             },
           }),
-          await MenuItem.new({
-            id: 'metadata',
-            text: 'Metadata',
-            action: async () => {
-
-              try{
-
-                if(openedFile){
-
-                  const cmdres = await Command.create('magick', [
-                    'identify', '-verbose', `${openedFile}`
-                  ]).execute()
-
-                  await message(cmdres?.stdout, { title: 'ImageMagick Metadata', kind: 'info' })
-                }
-
-              }
-              catch(cmderr){
-
-                errorMessage(cmderr)
-              }
-            },
-          }),
+          
           await MenuItem.new({
             id: 'clear',
             text: 'Clear',
@@ -398,135 +376,20 @@ window.addEventListener("DOMContentLoaded", () => {
             text: 'separator-text',
             item: 'Separator',
           }),
-          await MenuItem.new({
-            id: 'zoomin175',
-            text: 'Zoom In 175%',
-            action: async () => {
-
-              if(document.getElementById('image-el')){
-
-                document.getElementById('image-el').style.transform = 'scale(1.75)'
-                document.getElementById('image-el').style.transformOrigin = 'center'
-              }
-              else if(document.getElementById('svg-el')){
-
-                document.getElementById('svg-el').style.transform = 'scale(1.75)'
-                document.getElementById('svg-el').style.transformOrigin = 'center'
-              }
-            },
-          }),
-          await MenuItem.new({
-            id: 'zoomin150',
-            text: 'Zoom In 150%',
-            action: async () => {
-
-              if(document.getElementById('image-el')){
-
-                document.getElementById('image-el').style.transform = 'scale(1.5)'
-                document.getElementById('image-el').style.transformOrigin = 'center'
-              }
-              else if(document.getElementById('svg-el')){
-
-                document.getElementById('svg-el').style.transform = 'scale(1.5)'
-                document.getElementById('svg-el').style.transformOrigin = 'center'
-              }
-            },
-          }),
-          await MenuItem.new({
-            id: 'zoomin125',
-            text: 'Zoom In 125%',
-            action: async () => {
-
-              if(document.getElementById('image-el')){
-
-                document.getElementById('image-el').style.transform = 'scale(1.25)'
-                document.getElementById('image-el').style.transformOrigin = 'center'
-              }
-              else if(document.getElementById('svg-el')){
-
-                document.getElementById('svg-el').style.transform = 'scale(1.25)'
-                document.getElementById('svg-el').style.transformOrigin = 'center'
-              }
-            },
-          }),
+          
+          
           await PredefinedMenuItem.new({
             text: 'separator-text',
             item: 'Separator',
           }),
-          await MenuItem.new({
-            id: 'zoomout75',
-            text: 'Zoom Out 75%',
-            action: async () => {
-
-              if(document.getElementById('image-el')){
-
-                document.getElementById('image-el').style.transform = 'scale(0.75)'
-                document.getElementById('image-el').style.transformOrigin = 'center'
-              }
-              else if(document.getElementById('svg-el')){
-
-                document.getElementById('svg-el').style.transform = 'scale(0.75)'
-                document.getElementById('svg-el').style.transformOrigin = 'center'
-              }
-            },
-          }),
-          await MenuItem.new({
-            id: 'zoomout50',
-            text: 'Zoom Out 50%',
-            action: async () => {
-
-              if(document.getElementById('image-el')){
-
-                document.getElementById('image-el').style.transform = 'scale(0.5)'
-                document.getElementById('image-el').style.transformOrigin = 'center'
-              }
-              else if(document.getElementById('svg-el')){
-
-                document.getElementById('svg-el').style.transform = 'scale(0.5)'
-                document.getElementById('svg-el').style.transformOrigin = 'center'
-              }
-            }
-          }),
-          await MenuItem.new({
-            id: 'zoomout25',
-            text: 'Zoom Out 25%',
-            action: async () => {
-
-              if(document.getElementById('image-el')){
-
-                document.getElementById('image-el').style.transform = 'scale(0.25)'
-                document.getElementById('image-el').style.transformOrigin = 'center'
-              }
-              else if(document.getElementById('svg-el')){
-
-                document.getElementById('svg-el').style.transform = 'scale(0.25)'
-                document.getElementById('svg-el').style.transformOrigin = 'center'
-              }
-            }
-          }),
+          
+          
+          
           await PredefinedMenuItem.new({
             text: 'separator-text',
             item: 'Separator',
           }),
-          await MenuItem.new({
-            id: 'resetview',
-            text: 'Reset',
-            action: async () => {
-
-              if(document.getElementById('image-el')){
-
-                document.getElementById('image-el').style.transform = 'scale(1)'
-                
-                scale = 1
-              }
-              else if(document.getElementById('svg-el')){
-
-                document.getElementById('svg-el').style.transform = 'scale(1)'
-                
-                scale = 1
-              }
-            },
-          }),
+          
         ]
       })
 
@@ -675,25 +538,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 }
               },
           }),
-          await MenuItem.new({
-              id: 'halfsize',
-              text: '50%',
-              action: async () => {
-
-                if(openedFile){
-
-                  if(!xcombine){
-
-                    const outsfx = await addSuffix('halfsize')
-                    shellCmd([openedFile,'-resize','50%',outsfx])
-                  }
-                  else{
-
-                    
-                  }
-                }
-              },
-          }),
+          
         ]
       })
 
@@ -738,38 +583,8 @@ window.addEventListener("DOMContentLoaded", () => {
               }
             },
           }),
-          await PredefinedMenuItem.new({
-            text: 'separator-text',
-            item: 'Separator',
-          }),
-          await MenuItem.new({
-            id: 'm90',
-            text: '-90°',
-            action: async () => {
-
-              
-            },
-          }),
-          await MenuItem.new({
-            id: 'm180',
-            text: '-180°',
-            action: async () => {
-
-              //document.body.style.backgroundColor = '#F1F1F1'
-            },
-          }),
-          await PredefinedMenuItem.new({
-            text: 'separator-text',
-            item: 'Separator',
-          }),
-          await MenuItem.new({
-            id: 'autorotate',
-            text: 'Auto orient',
-            action: async () => {
-
-              
-            },
-          }),
+          
+          
         ]
       })
 
@@ -942,46 +757,8 @@ window.addEventListener("DOMContentLoaded", () => {
               }
             },
           }),
-          await MenuItem.new({
-            id: 'charcoal',
-            text: 'Charcoal',
-            action: async () => {
-
-              if(openedFile){
-
-                if(!xcombine){
-
-                  const outx = await addSuffix('_charcoal')
-                  shellCmd([openedFile, '-charcoal', '1.2', outx])
-                }
-                else{
-
-                  xoper.push(...['-charcoal','1.2'])
-                  
-                }
-              }
-            },
-          }),
-          await MenuItem.new({
-            id: 'negate',
-            text: 'Negate',
-            action: async () => {
-
-              if(openedFile){
-
-                if(!xcombine){
-
-                  const outx = await addSuffix('_negate')
-                  shellCmd([openedFile, '-negate', outx])
-                }
-                else{
-
-                  xoper.push('-negate')
-                  
-                }
-              }
-            },
-          }),
+          
+          
         ]
       })
 
@@ -1045,13 +822,13 @@ window.addEventListener("DOMContentLoaded", () => {
       menu = await Menu.new({
         items: [
           fileMenu,
-          viewMenu,
+          //viewMenu,
           recent_menu,
-          actionMenu,
-          exportMenu,
-          resizeMenu,
-          rotateMenu,
-          effectsMenu,
+          //actionMenu,
+          //exportMenu,
+          //resizeMenu,
+          //rotateMenu,
+          //effectsMenu,
           helpMenu
         ],
       });
