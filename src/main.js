@@ -1,4 +1,8 @@
 
+const { h, render } = window.preact;
+const html = window.htm.bind(h);
+import App from './App.js';
+
 //const { invoke } = window.__TAURI__.core;
 const { exists, BaseDirectory, readTextFile, readFile } = window.__TAURI__.fs;
 const { getVersion } = window.__TAURI__.app
@@ -303,6 +307,13 @@ window.addEventListener("DOMContentLoaded", () => {
             action: () => {
 
               loadImage(openedFile)
+            },
+          }),
+          await MenuItem.new({
+            id: 'increment-counter',
+            text: 'Increment Counter',
+            action: () => {
+              window.dispatchEvent(new CustomEvent('tauri-menu-command', { detail: 'increment-counter' }));
             },
           }),
           await MenuItem.new({
@@ -1168,3 +1179,6 @@ window.addEventListener("DOMContentLoaded", () => {
 
   
 });
+
+// Render the Preact app
+render(html`<${App} />`, document.getElementById('app'));
