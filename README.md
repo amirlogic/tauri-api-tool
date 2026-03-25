@@ -1,8 +1,8 @@
-# Video Project
+# Tauri Preact Boilerplate
 
-Video Project Manager
+Designed to offer state based interactive user interface with the least complexity
 
-
+No webpack needed
 
 
 
@@ -60,15 +60,13 @@ To open the console and view errors: Open DevTools using Right click then Inspec
 
 The semicolon after the 2 IIFEs inside the DOMContentLoaded event listener are necessary to avoid error.
 
+Do not put icons in menus to avoid errors
+
 
 ### Features
 
-- Remotion projects file generator
+- File operations plugins
 
-- 
+- "Open with" support
 
-
-
-
-
-
+- SQLite plugin
