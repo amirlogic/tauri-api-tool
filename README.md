@@ -63,6 +63,24 @@ The semicolon after the 2 IIFEs inside the DOMContentLoaded event listener are n
 Do not put icons in menus to avoid errors
 
 
+### Added
+
+1. Created src/router.js:
+       - parseRoute(hash): Logic to parse the URL hash into a route object.
+       - buildRoutePath(name, params): Helper to generate hash strings for navigation.
+       - useHashRoute(): A custom Preact hook that manages the current route state and listens for hashchange events.
+
+2. Modified src/App.js:
+       - Integrated the useHashRoute hook.
+       - Implemented conditional rendering using a routeMap (Home, About, Settings, and 404 pages).
+       - Updated the Navbar with interactive links that use the navigate function.
+       - Extended the tauri-menu-command event listener to handle navigation requests from the native OS menu.
+
+3. Modified src/main.js:
+       - Updated the "Router" native menu items to dispatch custom events (navigate-home, navigate-about,
+         navigate-settings) when clicked, allowing the native menu to control the frontend routing.
+
+
 ### Features
 
 - File operations plugins
