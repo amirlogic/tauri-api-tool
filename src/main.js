@@ -152,7 +152,7 @@ function showHistory(){
 }
 
 
-async function loadImage(fname) {
+/* async function loadImage(fname) {
 
   //console.log(`Md file opening requested: ${fname}`)
 
@@ -254,9 +254,9 @@ async function loadImage(fname) {
 
   
 
-}
+} */
 
-async function openImage() {
+/* async function openImage() {
 
   try{
 
@@ -277,7 +277,7 @@ async function openImage() {
     errorMessage(err)
     
   }
-}
+} */
 
 let menu
 
@@ -353,46 +353,37 @@ window.addEventListener("DOMContentLoaded", () => {
         ]
       })
 
-      /* const viewMenu = await Submenu.new({
-        text: 'View',
+      const viewMenu = await Submenu.new({
+        text: 'Router',
         items: [
           await MenuItem.new({
-            id: 'bgcolorlight',
-            text: 'Background Color: Light Gray',
+            id: 'home',
+            text: 'Home',
             action: async () => {
-
-              document.body.style.backgroundColor = '#F1F1F1'
+              window.dispatchEvent(new CustomEvent('tauri-menu-command', { detail: 'navigate-home' }));
             },
           }),
           await MenuItem.new({
-            id: 'bgcolordark',
-            text: 'Background Color: Dark',
+            id: 'about',
+            text: 'About',
             action: async () => {
-
-              document.body.style.backgroundColor = '#000000'
+              window.dispatchEvent(new CustomEvent('tauri-menu-command', { detail: 'navigate-about' }));
+            },
+          }),
+          await MenuItem.new({
+            id: 'settings',
+            text: 'Settings',
+            action: async () => {
+              window.dispatchEvent(new CustomEvent('tauri-menu-command', { detail: 'navigate-settings' }));
             },
           }),
           await PredefinedMenuItem.new({
             text: 'separator-text',
             item: 'Separator',
           }),
-          
-          
-          await PredefinedMenuItem.new({
-            text: 'separator-text',
-            item: 'Separator',
-          }),
-          
-          
-          
-          await PredefinedMenuItem.new({
-            text: 'separator-text',
-            item: 'Separator',
-          }),
-          
         ]
       })
- */
+
 
       /* const check_sub_item_combine_on = await CheckMenuItem.new({
               id: 'combineon',
@@ -822,7 +813,7 @@ window.addEventListener("DOMContentLoaded", () => {
       menu = await Menu.new({
         items: [
           fileMenu,
-          //viewMenu,
+          viewMenu,
           recent_menu,
           //actionMenu,
           //exportMenu,
