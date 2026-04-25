@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "videoproject",
-  "version": "0.1.0",
-  "identifier": "com.videoproject.app",
+  "productName": "tauriboilerplate",
+  "version": "0.1.1",
+  "identifier": "com.boilerplate.app",
   "build": {
     "frontendDist": "../src"
   },
@@ -10,7 +10,7 @@
     "withGlobalTauri": true,
     "windows": [
       {
-        "title": "Video Project",
+        "title": "Tauri Boilerplate",
         "width": 880,
         "height": 660
       }
