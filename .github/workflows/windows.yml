@@ -1,6 +1,8 @@
 name: 'build-artifact'
 
 on:
+  push:
+    branches: [dev]
   workflow_dispatch:
   
 jobs:
