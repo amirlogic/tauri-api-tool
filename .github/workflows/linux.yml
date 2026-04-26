@@ -1,8 +1,6 @@
 name: 'build-artifact-linux'
 
 on:
-  push:
-    branches: [dev]
   workflow_dispatch:
 
   
