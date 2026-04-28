@@ -45,7 +45,10 @@
       ]
     },
     "os:default",
-    "sql:default",
+    "sql:allow-close",
+    "sql:allow-execute",
+    "sql:allow-load",
+    "sql:allow-select",
     "core:event:default",
     "deep-link:default"
   ]
