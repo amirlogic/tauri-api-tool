@@ -17,6 +17,10 @@ export function parseRoute(hash = '') {
     return { name: 'settings', params: {}, path: '/settings' };
   }
 
+  if (segments[0] === 'database') {
+    return { name: 'database', params: {}, path: '/database' };
+  }
+
   return { name: 'not-found', params: { path: normalizedPath }, path: normalizedPath };
 }
 
@@ -26,6 +30,9 @@ export function buildRoutePath(name = 'home', params = {}) {
   }
   if (name === 'settings') {
     return '/settings';
+  }
+  if (name === 'database') {
+    return '/database';
   }
   return '/';
 }

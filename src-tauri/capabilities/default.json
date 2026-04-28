@@ -45,6 +45,7 @@
       ]
     },
     "os:default",
+    "sql:default",
     "core:event:default",
     "deep-link:default"
   ]

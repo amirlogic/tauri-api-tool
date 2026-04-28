@@ -377,6 +377,13 @@ window.addEventListener("DOMContentLoaded", () => {
               window.dispatchEvent(new CustomEvent('tauri-menu-command', { detail: 'navigate-settings' }));
             },
           }),
+          await MenuItem.new({
+            id: 'database',
+            text: 'Database',
+            action: async () => {
+              window.dispatchEvent(new CustomEvent('tauri-menu-command', { detail: 'navigate-database' }));
+            },
+          }),
           await PredefinedMenuItem.new({
             text: 'separator-text',
             item: 'Separator',
