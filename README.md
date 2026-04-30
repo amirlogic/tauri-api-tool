@@ -63,6 +63,18 @@ The semicolon after the 2 IIFEs inside the DOMContentLoaded event listener are n
 Do not put icons in menus to avoid errors
 
 
+### Permissions
+
+Tauri has restrictive default permissions
+
+- SQLite: Default does not include execute
+
+- File system (fs): Default does not allow to modify files
+
+- Shell: Commands must be whitelisted to allow execution
+
+
+
 ### Added
 
 1. Created src/router.js:

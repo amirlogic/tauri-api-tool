@@ -41,6 +41,42 @@
           "cmd": "magick",
           "args": true,
           "sidecar": false
+        },
+	      {
+          "name": "ffmpeg",
+          "cmd": "ffmpeg",
+          "args": true,
+          "sidecar": false
+        },
+        {
+          "name": "npm",
+          "cmd": "npm",
+          "args": true,
+          "sidecar": false
+        },
+        {
+          "name": "pnpm",
+          "cmd": "pnpm",
+          "args": true,
+          "sidecar": false
+        },
+        {
+          "name": "node",
+          "cmd": "node",
+          "args": true,
+          "sidecar": false
+        },
+        {
+          "name": "git",
+          "cmd": "git",
+          "args": true,
+          "sidecar": false
+        },
+        {
+          "name": "python",
+          "cmd": "python",
+          "args": true,
+          "sidecar": false
         }
       ]
     },
