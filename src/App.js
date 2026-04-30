@@ -68,6 +68,95 @@ function DatabaseScreen() {
   `;
 }
 
+function TextFileScreen() {
+  const [filePath, setFilePath] = useState('');
+  const [content, setContent] = useState('');
+  const [error, setError] = useState(null);
+
+  async function openFile() {
+    try {
+      const { open } = window.__TAURI__.dialog;
+      const selected = await open({
+        multiple: false,
+        filters: [{
+          name: 'Text',
+          extensions: ['txt', 'js', 'json', 'rs', 'md', 'html', 'css']
+        }]
+      });
+
+      if (selected) {
+        setFilePath(selected);
+        await readFileContent(selected);
+      }
+    } catch (err) {
+      setError(err.toString());
+    }
+  }
+
+  async function readFileContent(path) {
+    try {
+      const { readTextFile } = window.__TAURI__.fs;
+      const text = await readTextFile(path);
+      setContent(text);
+      setError(null);
+    } catch (err) {
+      setError(`Failed to read file: ${err.toString()}`);
+    }
+  }
+
+  useEffect(() => {
+    let unwatch = null;
+
+    async function setupWatcher() {
+      if (filePath) {
+        try {
+          const { watch } = window.__TAURI__.fs;
+          unwatch = await watch(filePath, (event) => {
+            // In Tauri v2, the event structure might differ, 
+            // but usually we just re-read the file on any change.
+            readFileContent(filePath);
+          });
+        } catch (err) {
+          console.error("Watcher error:", err);
+        }
+      }
+    }
+
+    setupWatcher();
+
+    return () => {
+      if (unwatch) {
+        unwatch();
+      }
+    };
+  }, [filePath]);
+
+  return html`
+    <div class="mt-5">
+      <h1>Text File Viewer</h1>
+      <p>Open a file to watch for changes and display its content.</p>
+      
+      <div class="mb-3">
+        <button class="btn btn-primary" onclick=${openFile}>Open File</button>
+      </div>
+
+      ${error ? html`<div class="alert alert-danger">${error}</div>` : ''}
+
+      ${filePath ? html`
+        <div class="card shadow-sm">
+          <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <span class="text-truncate mr-2"><strong>File:</strong> ${filePath}</span>
+            <button class="btn btn-sm btn-outline-secondary" onclick=${() => readFileContent(filePath)}>Reload</button>
+          </div>
+          <div class="card-body p-0">
+            <pre class="m-0 p-3" style="max-height: 500px; overflow: auto; background-color: #f8f9fa;"><code>${content}</code></pre>
+          </div>
+        </div>
+      ` : html`<p class="text-muted">No file selected.</p>`}
+    </div>
+  `;
+}
+
 function App() {
   const [route, navigate] = useHashRoute();
   const [count, setCount] = useState(0);
@@ -120,6 +209,7 @@ function App() {
       </div>
     `,
     database: () => html`<${DatabaseScreen} />`,
+    textfile: () => html`<${TextFileScreen} />`,
     'not-found': () => html`
       <div class="text-center mt-5">
         <h1>404 - Not Found</h1>
@@ -162,6 +252,10 @@ function App() {
               <li class="nav-item">
                 <a class="nav-link ${route.name === 'database' ? 'active fw-bold' : ''}" 
                    href="#" onclick=${(e) => { e.preventDefault(); navigate('database'); }}>Database</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link ${route.name === 'textfile' ? 'active fw-bold' : ''}" 
+                   href="#" onclick=${(e) => { e.preventDefault(); navigate('textfile'); }}>Text File</a>
               </li>
             </ul>
             <span id="opened-file" class="navbar-text">

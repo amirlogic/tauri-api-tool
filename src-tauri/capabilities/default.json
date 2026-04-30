@@ -29,6 +29,10 @@
       "identifier": "fs:allow-read-text-file",
       "allow": [{ "path": "**" }]
     },
+    {
+      "identifier": "fs:allow-watch",
+      "allow": [{ "path": "**" }]
+    },
     "store:default",
     "dialog:default",
     "shell:allow-open",

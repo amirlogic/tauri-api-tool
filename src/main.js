@@ -4,7 +4,7 @@ const html = window.htm.bind(h);
 import App from './App.js';
 
 //const { invoke } = window.__TAURI__.core;
-const { exists, BaseDirectory, readTextFile, readFile } = window.__TAURI__.fs;
+const { exists, BaseDirectory, readTextFile, readFile, watch } = window.__TAURI__.fs;
 const { getVersion } = window.__TAURI__.app
 const { join, dirname, extname } = window.__TAURI__.path;
 const { Menu, MenuItem, Submenu, PredefinedMenuItem, CheckMenuItem } = window.__TAURI__.menu;
@@ -387,6 +387,20 @@ window.addEventListener("DOMContentLoaded", () => {
           await PredefinedMenuItem.new({
             text: 'separator-text',
             item: 'Separator',
+          }),
+          await MenuItem.new({
+            id: 'ffmpeg',
+            text: 'FFMPEG',
+            action: async () => {
+              window.dispatchEvent(new CustomEvent('tauri-menu-command', { detail: 'navigate-ffmpeg' }));
+            },
+          }),
+          await MenuItem.new({
+            id: 'textfile',
+            text: 'Text File',
+            action: async () => {
+              window.dispatchEvent(new CustomEvent('tauri-menu-command', { detail: 'navigate-textfile' }));
+            },
           }),
         ]
       })

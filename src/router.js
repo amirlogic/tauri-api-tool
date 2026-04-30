@@ -21,6 +21,10 @@ export function parseRoute(hash = '') {
     return { name: 'database', params: {}, path: '/database' };
   }
 
+  if (segments[0] === 'textfile') {
+    return { name: 'textfile', params: {}, path: '/textfile' };
+  }
+
   return { name: 'not-found', params: { path: normalizedPath }, path: normalizedPath };
 }
 
@@ -33,6 +37,9 @@ export function buildRoutePath(name = 'home', params = {}) {
   }
   if (name === 'database') {
     return '/database';
+  }
+  if (name === 'textfile') {
+    return '/textfile';
   }
   return '/';
 }

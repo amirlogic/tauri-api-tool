@@ -92,6 +92,23 @@ Tauri has restrictive default permissions
        - Updated the "Router" native menu items to dispatch custom events (navigate-home, navigate-about,
          navigate-settings) when clicked, allowing the native menu to control the frontend routing.
 
+---
+
+ I have added the requested feature to the Tauri v2 app. The application can now open text files, display their
+  content, and automatically update the display when the file is modified on disk.
+
+  Changes Summary:
+
+   1. Routing: Updated `src/router.js` to include the textfile route.
+   2. Frontend:
+       * Implemented the TextFileScreen component in `src/App.js`.
+       * Added file opening logic using Tauri's dialog plugin.
+       * Implemented live-watching using Tauri's fs.watch API, ensuring the content stays in sync with the file on disk.
+       * Updated the navigation bar and route mapping to include the new screen.
+   3. Permissions: Updated `src-tauri/capabilities/default.json` to include `fs:allow-watch`, enabling the file-watching
+      functionality in Tauri v2.
+  The feature is now fully integrated and can be accessed via the "Text File" link
+
 
 ### Features
 
