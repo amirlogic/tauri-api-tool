@@ -210,6 +210,7 @@ function App() {
     `,
     database: () => html`<${DatabaseScreen} />`,
     textfile: () => html`<${TextFileScreen} />`,
+    ffmpeg: () => html`<${FFmpegScreen} />`,
     'not-found': () => html`
       <div class="text-center mt-5">
         <h1>404 - Not Found</h1>
@@ -244,6 +245,43 @@ function App() {
               <li class="nav-item">
                 <a class="nav-link ${route.name === 'about' ? 'active fw-bold' : ''}" 
                    href="#" onclick=${(e) => { e.preventDefault(); navigate('about'); }}>About</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link ${route.name === 'settings' ? 'active fw-bold' : ''}" 
+                   href="#" onclick=${(e) => { e.preventDefault(); navigate('settings'); }}>Settings</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link ${route.name === 'database' ? 'active fw-bold' : ''}" 
+                   href="#" onclick=${(e) => { e.preventDefault(); navigate('database'); }}>Database</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link ${route.name === 'textfile' ? 'active fw-bold' : ''}" 
+                   href="#" onclick=${(e) => { e.preventDefault(); navigate('textfile'); }}>Text File</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link ${route.name === 'ffmpeg' ? 'active fw-bold' : ''}" 
+                   href="#" onclick=${(e) => { e.preventDefault(); navigate('ffmpeg'); }}>FFMPEG</a>
+              </li>
+            </ul>
+            <span id="opened-file" class="navbar-text">
+              Current Route: ${route.name}
+            </span>
+          </div>
+        </div>
+      </nav>
+
+      <main class="container-fluid">
+        <div class="container">
+          ${routeBody}
+        </div>
+        <div id="image" class="min-vh-50">
+        </div>
+      </main>
+    </div>
+  `;
+}
+
+export default App;About</a>
               </li>
               <li class="nav-item">
                 <a class="nav-link ${route.name === 'settings' ? 'active fw-bold' : ''}" 
