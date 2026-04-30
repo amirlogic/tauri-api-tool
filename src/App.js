@@ -14,6 +14,7 @@ function DatabaseScreen() {
     async function initDb() {
       try {
         const Database = window.__TAURI__.sql;
+        if (!Database) throw new Error("SQL plugin not available");
         const connection = await Database.load("sqlite:test.db");
         await connection.execute("CREATE TABLE IF NOT EXISTS demo (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT)");
         setDb(connection);
@@ -75,7 +76,8 @@ function TextFileScreen() {
 
   async function openFile() {
     try {
-      const { open } = window.__TAURI__.dialog;
+      const { open } = window.__TAURI__.dialog || {};
+      if (!open) throw new Error("Dialog plugin not available");
       const selected = await open({
         multiple: false,
         filters: [{
@@ -95,7 +97,8 @@ function TextFileScreen() {
 
   async function readFileContent(path) {
     try {
-      const { readTextFile } = window.__TAURI__.fs;
+      const { readTextFile } = window.__TAURI__.fs || {};
+      if (!readTextFile) throw new Error("FS plugin not available");
       const text = await readTextFile(path);
       setContent(text);
       setError(null);
@@ -110,12 +113,12 @@ function TextFileScreen() {
     async function setupWatcher() {
       if (filePath) {
         try {
-          const { watch } = window.__TAURI__.fs;
-          unwatch = await watch(filePath, (event) => {
-            // In Tauri v2, the event structure might differ, 
-            // but usually we just re-read the file on any change.
-            readFileContent(filePath);
-          });
+          const { watch } = window.__TAURI__.fs || {};
+          if (watch) {
+            unwatch = await watch(filePath, (event) => {
+              readFileContent(filePath);
+            });
+          }
         } catch (err) {
           console.error("Watcher error:", err);
         }
@@ -153,6 +156,53 @@ function TextFileScreen() {
           </div>
         </div>
       ` : html`<p class="text-muted">No file selected.</p>`}
+    </div>
+  `;
+}
+
+function FFmpegScreen() {
+  const [output, setOutput] = useState('Checking FFmpeg version...');
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    async function checkVersion() {
+      try {
+        const { Command } = window.__TAURI__.shell || {};
+        if (!Command) throw new Error("Shell plugin not available");
+        const cmd = await Command.create('ffmpeg', ['-version']);
+        const result = await cmd.execute();
+        
+        if (result.code === 0) {
+          setOutput(result.stdout);
+        } else {
+          setError(`Command failed with code ${result.code}: ${result.stderr}`);
+          setOutput(result.stderr);
+        }
+      } catch (err) {
+        setError(`Failed to execute command: ${err.toString()}`);
+        setOutput('Error executing ffmpeg');
+      }
+    }
+
+    checkVersion();
+  }, []);
+
+  return html`
+    <div class="mt-5">
+      <h1>FFmpeg Info</h1>
+      <p>This screen checks and displays the installed FFmpeg version.</p>
+
+      ${error ? html`<div class="alert alert-danger">${error}</div>` : ''}
+
+      <div class="form-group mt-3">
+        <label for="ffmpeg-output" class="form-label">FFmpeg Version Output:</label>
+        <textarea id="ffmpeg-output" class="form-control" rows="15" disabled 
+                  style="font-family: monospace; background-color: #f8f9fa;">${output}</textarea>
+      </div>
+      
+      <div class="mt-3">
+        <button class="btn btn-outline-secondary" onclick=${() => window.location.reload()}>Refresh</button>
+      </div>
     </div>
   `;
 }
@@ -261,39 +311,6 @@ function App() {
               <li class="nav-item">
                 <a class="nav-link ${route.name === 'ffmpeg' ? 'active fw-bold' : ''}" 
                    href="#" onclick=${(e) => { e.preventDefault(); navigate('ffmpeg'); }}>FFMPEG</a>
-              </li>
-            </ul>
-            <span id="opened-file" class="navbar-text">
-              Current Route: ${route.name}
-            </span>
-          </div>
-        </div>
-      </nav>
-
-      <main class="container-fluid">
-        <div class="container">
-          ${routeBody}
-        </div>
-        <div id="image" class="min-vh-50">
-        </div>
-      </main>
-    </div>
-  `;
-}
-
-export default App;About</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link ${route.name === 'settings' ? 'active fw-bold' : ''}" 
-                   href="#" onclick=${(e) => { e.preventDefault(); navigate('settings'); }}>Settings</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link ${route.name === 'database' ? 'active fw-bold' : ''}" 
-                   href="#" onclick=${(e) => { e.preventDefault(); navigate('database'); }}>Database</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link ${route.name === 'textfile' ? 'active fw-bold' : ''}" 
-                   href="#" onclick=${(e) => { e.preventDefault(); navigate('textfile'); }}>Text File</a>
               </li>
             </ul>
             <span id="opened-file" class="navbar-text">

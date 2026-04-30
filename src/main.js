@@ -4,18 +4,18 @@ const html = window.htm.bind(h);
 import App from './App.js';
 
 //const { invoke } = window.__TAURI__.core;
-const { exists, BaseDirectory, readTextFile, readFile, watch } = window.__TAURI__.fs;
-const { getVersion } = window.__TAURI__.app
-const { join, dirname, extname } = window.__TAURI__.path;
-const { Menu, MenuItem, Submenu, PredefinedMenuItem, CheckMenuItem } = window.__TAURI__.menu;
-const { getCurrentWindow } = window.__TAURI__.window;
+const { exists, BaseDirectory, readTextFile, readFile, watch } = window.__TAURI__.fs || {};
+const { getVersion } = window.__TAURI__.app || { getVersion: () => '0.0.0' };
+const { join, dirname, extname } = window.__TAURI__.path || { join: (...a) => a.join('/'), extname: (p) => p.split('.').pop() };
+const { Menu, MenuItem, Submenu, PredefinedMenuItem, CheckMenuItem } = window.__TAURI__.menu || {};
+const { getCurrentWindow } = window.__TAURI__.window || {};
 
-const { open, message, confirm } = window.__TAURI__.dialog;
-const { Command } = window.__TAURI__.shell;
-const { openPath } = window.__TAURI__.opener;
-const { platform } = window.__TAURI__.os;
-const { getCurrent } = window.__TAURI__.deepLink   // onOpenUrl
-const { getMatches } = window.__TAURI__.cli;
+const { open, message, confirm } = window.__TAURI__.dialog || {};
+const { Command } = window.__TAURI__.shell || {};
+const { openPath } = window.__TAURI__.opener || {};
+const { platform } = window.__TAURI__.os || {};
+const { getCurrent } = window.__TAURI__.deepLink || {};
+const { getMatches } = window.__TAURI__.cli || { getMatches: () => ({}) };
 const Database = window.__TAURI__.sql
 
 
@@ -152,7 +152,7 @@ function showHistory(){
 }
 
 
-/* async function loadImage(fname) {
+async function loadImage(fname) {
 
   //console.log(`Md file opening requested: ${fname}`)
 
@@ -160,7 +160,7 @@ function showHistory(){
 
   const cont = document.getElementById(targetEl)
 
-  document.getElementById('topleft').innerText = ''
+  //document.getElementById('topleft').innerText = ''
 
   try{
 
@@ -195,7 +195,7 @@ function showHistory(){
 
       imgWidth = svgElement.width.baseVal.value
 
-      document.getElementById('topleft').innerText = `svg ${imgHeight}x${imgWidth}`
+      //document.getElementById('topleft').innerText = `svg ${imgHeight}x${imgWidth}`
 
     }
     else{
@@ -222,7 +222,7 @@ function showHistory(){
 
       imgnode.addEventListener("load", () => {
 
-        document.getElementById('topleft').innerText = `${imgnode.naturalWidth}x${imgnode.naturalHeight}`
+        //document.getElementById('topleft').innerText = `${imgnode.naturalWidth}x${imgnode.naturalHeight}`
 
         imgWidth = imgnode.naturalWidth
 
@@ -254,9 +254,9 @@ function showHistory(){
 
   
 
-} */
+}
 
-/* async function openImage() {
+async function openImage() {
 
   try{
 
@@ -277,7 +277,7 @@ function showHistory(){
     errorMessage(err)
     
   }
-} */
+} 
 
 let menu
 
@@ -812,7 +812,7 @@ window.addEventListener("DOMContentLoaded", () => {
         ]
       })
 
-      let recent_menu = {
+      /* let recent_menu = {
             id: 'recent',
             text: 'Recent',
             items:[
@@ -829,18 +829,13 @@ window.addEventListener("DOMContentLoaded", () => {
               {id: 'r9',text:'-', action:()=>{ loadImage(history[9]) }}
             ]
             
-          }
+          } */
 
       menu = await Menu.new({
         items: [
           fileMenu,
           viewMenu,
-          recent_menu,
-          //actionMenu,
-          //exportMenu,
-          //resizeMenu,
-          //rotateMenu,
-          //effectsMenu,
+          //recent_menu,
           helpMenu
         ],
       });
