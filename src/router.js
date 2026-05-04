@@ -29,6 +29,10 @@ export function parseRoute(hash = '') {
     return { name: 'ffmpeg', params: {}, path: '/ffmpeg' };
   }
 
+  if (segments[0] === 'ejs') {
+    return { name: 'ejs', params: {}, path: '/ejs' };
+  }
+
   return { name: 'not-found', params: { path: normalizedPath }, path: normalizedPath };
 }
 
@@ -47,6 +51,9 @@ export function buildRoutePath(name = 'home', params = {}) {
   }
   if (name === 'ffmpeg') {
     return '/ffmpeg';
+  }
+  if (name === 'ejs') {
+    return '/ejs';
   }
   return '/';
 }

@@ -1,0 +1,23 @@
+
+import { Composition } from "remotion";
+
+<% compositions.forEach((c) => { %>
+import { <%= c.component %> } from "./<%= c.component %>";
+<% }); %>
+
+export const RemotionRoot: React.FC = () => {
+  return (
+    <>
+      <% compositions.forEach((c) => { %>
+        <Composition
+          id="<%= c.id %>"
+          component={<%= c.component %>}
+          durationInFrames={<%= c.durif %>}
+          fps={<%= c.fps %>}
+          width={<%= c.width %>}
+          height={<%= c.height %>}
+        />
+      <% }); %>
+    </>
+  );
+};

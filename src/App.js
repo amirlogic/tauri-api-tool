@@ -108,16 +108,31 @@ function TextFileScreen() {
   }
 
   useEffect(() => {
-    let unwatch = null;
+    let unlisten;
+    let active = true;
 
     async function setupWatcher() {
       if (filePath) {
+        console.log("Setting up watcher for:", filePath);
         try {
           const { watch } = window.__TAURI__.fs || {};
           if (watch) {
-            unwatch = await watch(filePath, (event) => {
-              readFileContent(filePath);
+            const u = await watch(filePath, (event) => {
+              console.log("File watch event received:", event);
+              // Small delay to ensure the file is fully written/unlocked
+              setTimeout(() => {
+                if (active) readFileContent(filePath);
+              }, 100);
             });
+            
+            if (active) {
+              unlisten = u;
+              console.log("Watcher established successfully");
+            } else {
+              u(); // Component unmounted during setup
+            }
+          } else {
+            console.error("FS watch function not available");
           }
         } catch (err) {
           console.error("Watcher error:", err);
@@ -128,8 +143,10 @@ function TextFileScreen() {
     setupWatcher();
 
     return () => {
-      if (unwatch) {
-        unwatch();
+      active = false;
+      if (typeof unlisten === 'function') {
+        console.log("Unwatching:", filePath);
+        unlisten();
       }
     };
   }, [filePath]);
@@ -207,6 +224,137 @@ function FFmpegScreen() {
   `;
 }
 
+function EJSScreen() {
+  const [compositions, setCompositions] = useState([]);
+  const [form, setForm] = useState({
+    id: '',
+    component: '',
+    durif: 300,
+    fps: 30,
+    width: 1920,
+    height: 1080
+  });
+  const [error, setError] = useState(null);
+
+  function handleInputChange(e) {
+    const { name, value, type } = e.target;
+    setForm(prev => ({
+      ...prev,
+      [name]: type === 'number' ? Number(value) : value
+    }));
+  }
+
+  function addComposition() {
+    if (!form.id || !form.component) {
+      setError("ID and Component are required.");
+      return;
+    }
+    setCompositions(prev => [...prev, { ...form }]);
+    setForm({ id: '', component: '', durif: 300, fps: 30, width: 1920, height: 1080 });
+    setError(null);
+  }
+
+  function removeComposition(index) {
+    setCompositions(prev => prev.filter((_, i) => i !== index));
+  }
+
+  async function generateAndSave() {
+    try {
+      const { writeTextFile } = window.__TAURI__.fs || {};
+      const { save } = window.__TAURI__.dialog || {};
+
+      if (!save || !writeTextFile) {
+        throw new Error("Tauri FS or Dialog plugin not available");
+      }
+
+      // Fetch the template from the frontend server
+      const res = await fetch('/templates/Root.tsx.ejs');
+      if (!res.ok) throw new Error("Failed to load template");
+      const templateContent = await res.text();
+
+      // Render with EJS
+      if (!window.ejs) throw new Error("EJS is not loaded in window");
+      const output = window.ejs.render(templateContent, { compositions });
+
+      // Prompt save
+      const savePath = await save({
+        filters: [{ name: 'TypeScript React', extensions: ['tsx'] }],
+        defaultPath: 'Root.tsx'
+      });
+
+      if (savePath) {
+        await writeTextFile(savePath, output);
+        alert('File saved successfully!');
+      }
+
+    } catch (err) {
+      setError(err.toString());
+    }
+  }
+
+  return html`
+    <div class="mt-5">
+      <h1>EJS Template Generator</h1>
+      <p>Add compositions and generate a Remotion Root.tsx</p>
+
+      ${error ? html`<div class="alert alert-danger">${error}</div>` : ''}
+
+      <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">Add Composition</h5>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Composition ID</label>
+              <input type="text" class="form-control" name="id" value=${form.id} oninput=${handleInputChange} placeholder="MyComp" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Component Name</label>
+              <input type="text" class="form-control" name="component" value=${form.component} oninput=${handleInputChange} placeholder="MyComponent" />
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Duration (frames)</label>
+              <input type="number" class="form-control" name="durif" value=${form.durif} oninput=${handleInputChange} />
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">FPS</label>
+              <input type="number" class="form-control" name="fps" value=${form.fps} oninput=${handleInputChange} />
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Width</label>
+              <input type="number" class="form-control" name="width" value=${form.width} oninput=${handleInputChange} />
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Height</label>
+              <input type="number" class="form-control" name="height" value=${form.height} oninput=${handleInputChange} />
+            </div>
+            <div class="col-12 mt-3">
+              <button class="btn btn-primary" onclick=${addComposition}>Add Composition</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h4>Compositions</h4>
+      ${compositions.length === 0 ? html`<p class="text-muted">No compositions added yet.</p>` : html`
+        <ul class="list-group mb-4">
+          ${compositions.map((c, i) => html`
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <div>
+                <strong>${c.id}</strong> (${c.component}) - ${c.width}x${c.height} @ ${c.fps}fps, ${c.durif} frames
+              </div>
+              <button class="btn btn-sm btn-danger" onclick=${() => removeComposition(i)}>Remove</button>
+            </li>
+          `)}
+        </ul>
+      `}
+
+      <button class="btn btn-success" disabled=${compositions.length === 0} onclick=${generateAndSave}>
+        Generate Root.tsx
+      </button>
+    </div>
+  `;
+}
+
 function App() {
   const [route, navigate] = useHashRoute();
   const [count, setCount] = useState(0);
@@ -261,6 +409,7 @@ function App() {
     database: () => html`<${DatabaseScreen} />`,
     textfile: () => html`<${TextFileScreen} />`,
     ffmpeg: () => html`<${FFmpegScreen} />`,
+    ejs: () => html`<${EJSScreen} />`,
     'not-found': () => html`
       <div class="text-center mt-5">
         <h1>404 - Not Found</h1>
@@ -311,6 +460,10 @@ function App() {
               <li class="nav-item">
                 <a class="nav-link ${route.name === 'ffmpeg' ? 'active fw-bold' : ''}" 
                    href="#" onclick=${(e) => { e.preventDefault(); navigate('ffmpeg'); }}>FFMPEG</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link ${route.name === 'ejs' ? 'active fw-bold' : ''}" 
+                   href="#" onclick=${(e) => { e.preventDefault(); navigate('ejs'); }}>EJS</a>
               </li>
             </ul>
             <span id="opened-file" class="navbar-text">

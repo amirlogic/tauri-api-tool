@@ -46,61 +46,61 @@ let xcombine = false
 let scale = 1
 
 
-async function shellCmd(xrr=[]){
+async function shellCmd(xrr = []) {
 
-  try{
+  try {
 
-    if(!openedFile){
+    if (!openedFile) {
 
       throw "No opened file"
-      
+
     }
 
     const cmdres = await Command.create('magick', xrr).execute();
 
-    const cftxt = cmdres?.stdout || xrr[xrr.length-1]
+    const cftxt = cmdres?.stdout || xrr[xrr.length - 1]
 
     await message(cftxt, { title: 'Operation completed', kind: 'info' });
 
   }
-  catch(cmderr){
+  catch (cmderr) {
 
     errorMessage(cmderr)
   }
 }
 
-async function addSuffix(sfx=''){
+async function addSuffix(sfx = '') {
 
-  if(openedFile){
+  if (openedFile) {
 
     const sfext = await extname(openedFile)
 
-    return openedFile.replace(`.${sfext}`,`_${sfx}.${sfext}`)
+    return openedFile.replace(`.${sfext}`, `_${sfx}.${sfext}`)
   }
-  
+
 }
 
-async function changeExt(nwex=''){
+async function changeExt(nwex = '') {
 
   const sfext = await extname(openedFile)
 
-  return openedFile.replace(`.${sfext}`,`.${nwex}`)
+  return openedFile.replace(`.${sfext}`, `.${nwex}`)
 }
 
-async function errorMessage(err=''){
+async function errorMessage(err = '') {
 
   await message(err, { title: 'Oops...', kind: 'error' });
 }
 
-async function updateRecentMenu(){
+async function updateRecentMenu() {
 
   const recentMenu = await menu.get('recent')
 
-  history.forEach(async (hitem,indx)=>{
+  history.forEach(async (hitem, indx) => {
 
     const recentItem = await recentMenu.get(`r${indx}`)
 
-    if(recentItem){
+    if (recentItem) {
 
       await recentItem.setText(hitem)
     }
@@ -119,33 +119,33 @@ async function updateRecentMenu(){
   return await store.get('lastfile')
 } */
 
-function showHistory(){
+function showHistory() {
 
-  document.getElementById(targetEl).innerHTML = history.map((row,indx)=>{
-                                                                      return `<p><a id="hlnk-${indx}" href="#" class="history-item" data-filename="${row}">${row}</a></p>`
-                                                                    }).join('')
+  document.getElementById(targetEl).innerHTML = history.map((row, indx) => {
+    return `<p><a id="hlnk-${indx}" href="#" class="history-item" data-filename="${row}">${row}</a></p>`
+  }).join('')
 
   let hitems = document.querySelectorAll('.history-item')
-  
-  hitems.forEach((item)=>{
 
-    item.addEventListener('click',(e)=>{
+  hitems.forEach((item) => {
+
+    item.addEventListener('click', (e) => {
 
       e.preventDefault();
 
-      try{
+      try {
 
         const el = e.currentTarget
 
         loadImage(el.dataset.filename)
 
-        
+
       }
-      catch(err){
+      catch (err) {
 
         errorMessage(err)
       }
-      
+
     })
 
   })
@@ -162,7 +162,7 @@ async function loadImage(fname) {
 
   //document.getElementById('topleft').innerText = ''
 
-  try{
+  try {
 
     if (cont.hasChildNodes()) {
 
@@ -171,7 +171,7 @@ async function loadImage(fname) {
 
     //document.getElementById(targetEl).innerHTML = ''
 
-    if(imgext === 'svg'){
+    if (imgext === 'svg') {
 
       const rawsvg = await readTextFile(fname)
 
@@ -185,7 +185,7 @@ async function loadImage(fname) {
       //const svg = rawsvg.substr(rawsvg.indexOf('<svg')) //rawsvg.indexOf('<svg')
 
       svgElement.id = "svg-el"
-      
+
       document.getElementById(targetEl).appendChild(svgElement)
 
       //document.getElementById(targetEl).innerHTML = svg
@@ -198,15 +198,15 @@ async function loadImage(fname) {
       //document.getElementById('topleft').innerText = `svg ${imgHeight}x${imgWidth}`
 
     }
-    else{
+    else {
 
       const imgbytes = await readFile(fname)
-          
+
       const base64String = btoa(
-              Array.from(imgbytes)
-                .map(byte => String.fromCharCode(byte))
-                .join('')
-            )
+        Array.from(imgbytes)
+          .map(byte => String.fromCharCode(byte))
+          .join('')
+      )
 
       const imgext = await extname(fname)
 
@@ -232,13 +232,13 @@ async function loadImage(fname) {
 
       document.getElementById(targetEl).appendChild(imgnode)
 
-      
+
 
     }
 
-    if(history.indexOf(fname) == -1){
+    if (history.indexOf(fname) == -1) {
 
-      history.splice(0,0,fname)
+      history.splice(0, 0, fname)
       updateRecentMenu()
     }
 
@@ -247,47 +247,47 @@ async function loadImage(fname) {
     document.getElementById('opened-file').innerText = fname
 
   }
-  catch(err){
+  catch (err) {
 
     errorMessage(err)
   }
 
-  
+
 
 }
 
 async function openImage() {
 
-  try{
+  try {
 
     const filename = await open({
       multiple: false,
       directory: false,
-      extensions: ['svg','png','jpg','jpeg','bmp','gif','tiff']
+      extensions: ['svg', 'png', 'jpg', 'jpeg', 'bmp', 'gif', 'tiff']
     });
 
-    if(filename){
+    if (filename) {
 
       loadImage(filename)
     }
-    
+
   }
-  catch(err){
+  catch (err) {
 
     errorMessage(err)
-    
+
   }
-} 
+}
 
 let menu
 
 
 window.addEventListener("DOMContentLoaded", () => {
 
-  
-  (async ()=>{
 
-    try{
+  (async () => {
+
+    try {
 
       const fileMenu = await Submenu.new({
         text: 'File',
@@ -321,12 +321,12 @@ window.addEventListener("DOMContentLoaded", () => {
             text: 'Edit',
             action: async () => {
 
-              try{
+              try {
 
                 await openPath(openedFile)
 
               }
-              catch(err){
+              catch (err) {
 
                 await Command.create('notepad', [
                   openedFile
@@ -339,7 +339,7 @@ window.addEventListener("DOMContentLoaded", () => {
               }
             },
           }),
-          
+
           await MenuItem.new({
             id: 'clear',
             text: 'Clear',
@@ -400,6 +400,13 @@ window.addEventListener("DOMContentLoaded", () => {
             text: 'Text File',
             action: async () => {
               window.dispatchEvent(new CustomEvent('tauri-menu-command', { detail: 'navigate-textfile' }));
+            },
+          }),
+          await MenuItem.new({
+            id: 'ejs',
+            text: 'EJS',
+            action: async () => {
+              window.dispatchEvent(new CustomEvent('tauri-menu-command', { detail: 'navigate-ejs' }));
             },
           }),
         ]
@@ -805,8 +812,8 @@ window.addEventListener("DOMContentLoaded", () => {
 
               const appVersion = await getVersion();
 
-              await message(`Image Tool v${appVersion}\nCreated by Amir Hachaichi\ngithub.com/amirlogic/tauri-image-tool`, 
-                            { title: 'About', kind: 'info' });
+              await message(`Image Tool v${appVersion}\nCreated by Amir Hachaichi\ngithub.com/amirlogic/tauri-image-tool`,
+                { title: 'About', kind: 'info' });
             },
           }),
         ]
@@ -842,30 +849,30 @@ window.addEventListener("DOMContentLoaded", () => {
 
       await menu.setAsAppMenu();
     }
-    catch(err){
+    catch (err) {
 
       errorMessage(err)
     }
   })();
 
 
-  (async ()=>{
+  (async () => {
 
     const matches = await getMatches();
 
-    try{
+    try {
 
       if (matches.args && matches.args.file && matches.args.file.value) {
-        
+
         let filePath = matches.args.file.value.trim();
 
-        if(filePath.indexOf('\\\\') !== -1){
-          
+        if (filePath.indexOf('\\\\') !== -1) {
+
           let pathrr = filePath.split('\\\\')
 
           filePath = await join(...pathrr)
         }
-        else{
+        else {
 
           let pathrr = filePath.split('\\')
 
@@ -876,18 +883,18 @@ window.addEventListener("DOMContentLoaded", () => {
 
         const fileExists = await exists(filePath)
 
-        if(fileExists){
+        if (fileExists) {
 
           document.getElementById(targetEl).innerText = `open: ${filePath}`
 
           openedFile = filePath
 
           //setTimeout(async () => {
-            
+
           await loadImage(filePath)
           //}, 1000)
         }
-        else{
+        else {
 
           document.getElementById(targetEl).innerText = `File not found: ${filePath}`
 
@@ -896,7 +903,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
       }
     }
-    catch(err){
+    catch (err) {
 
       errorMessage(err)
     }
@@ -904,11 +911,11 @@ window.addEventListener("DOMContentLoaded", () => {
     // OpenWith DEV
     let devmode = "none"
 
-    if(devmode == "plugin"){
+    if (devmode == "plugin") {
 
       const urls = await getCurrent()
 
-      if(urls){
+      if (urls) {
 
         console.log(`getCurrent: ${urls}`)
 
@@ -918,22 +925,22 @@ window.addEventListener("DOMContentLoaded", () => {
       }
 
     }
-    else if(devmode == "listen"){
+    else if (devmode == "listen") {
 
-        const getevent = await getCurrentWindow().listen('deep-link', (event) => {
+      const getevent = await getCurrentWindow().listen('deep-link', (event) => {
 
-          console.log(`getCurrentWindow().listen: ${event.payload}`);
+        console.log(`getCurrentWindow().listen: ${event.payload}`);
 
-          document.getElementById(targetEl).innerText = `getCurrentWindow().listen: ${event.payload}`
-        });
+        document.getElementById(targetEl).innerText = `getCurrentWindow().listen: ${event.payload}`
+      });
 
-        /* const getevent = await getCurrentWindow().listen('open-file', (event) => {
-          console.log(`getCurrentWindow().listen: ${event.payload}`);
-          document.getElementById(targetEl).innerText = `getCurrentWindow().listen: ${event.payload}`
-        }); */
+      /* const getevent = await getCurrentWindow().listen('open-file', (event) => {
+        console.log(`getCurrentWindow().listen: ${event.payload}`);
+        document.getElementById(targetEl).innerText = `getCurrentWindow().listen: ${event.payload}`
+      }); */
 
     }
-    else if(devmode == "cli"){
+    else if (devmode == "cli") {
 
       if (matches.subcommand?.name === 'run') {
 
@@ -952,16 +959,16 @@ window.addEventListener("DOMContentLoaded", () => {
       }
 
     }
-    else{
+    else {
 
       console.log("No DevMode specified")
     }
 
   })();
 
-  
 
-  
+
+
 });
 
 // Render the Preact app
