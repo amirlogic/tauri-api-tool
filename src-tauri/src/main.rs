@@ -30,6 +30,7 @@ fn get_os() -> String {
 
 fn main() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_http::init())
         .plugin(tauri_plugin_sql::Builder::new().build())
         .plugin(tauri_plugin_cli::init())
         .plugin(tauri_plugin_deep_link::init())
