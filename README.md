@@ -40,9 +40,12 @@ pnpm tauri add os
 pnpm tauri add deep-link
 pnpm tauri add cli
 pnpm tauri add sql
+pnpm tauri add http
 ```
 
 Also for SQLite: `cargo add tauri-plugin-sql --features sqlite`
+
+For the watch function, it is optionnal and had to be activated in cargo.toml
 
 ### Linux
 
@@ -72,6 +75,8 @@ Tauri has restrictive default permissions
 - File system (fs): Default does not allow to modify files
 
 - Shell: Commands must be whitelisted to allow execution
+
+- http: Urls must be whitelisted
 
 
 
