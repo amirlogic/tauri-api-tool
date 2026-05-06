@@ -177,6 +177,155 @@ function TextFileScreen() {
   `;
 }
 
+function DirectoryWatcherScreen() {
+  const [dirPath, setDirPath] = useState('');
+  const [files, setFiles] = useState([]);
+  const [error, setError] = useState(null);
+  const [events, setEvents] = useState([]);
+
+  async function openDirectory() {
+    try {
+      const { open } = window.__TAURI__.dialog || {};
+      if (!open) throw new Error("Dialog plugin not available");
+      const selected = await open({
+        directory: true,
+        multiple: false
+      });
+
+      if (selected) {
+        setDirPath(selected);
+        await readDirectoryContent(selected);
+        setEvents([]);
+      }
+    } catch (err) {
+      setError(err.toString());
+    }
+  }
+
+  async function readDirectoryContent(path) {
+    try {
+      const { readDir } = window.__TAURI__.fs || {};
+      if (!readDir) throw new Error("FS plugin not available");
+      const entries = await readDir(path);
+      setFiles(entries);
+      setError(null);
+    } catch (err) {
+      setError(`Failed to read directory: ${err.toString()}`);
+    }
+  }
+
+  useEffect(() => {
+    let unlisten;
+    let active = true;
+
+    async function setupWatcher() {
+      if (dirPath) {
+        console.log("Setting up watcher for:", dirPath);
+        try {
+          const { watch } = window.__TAURI__.fs || {};
+          if (watch) {
+            const u = await watch(dirPath, (event) => {
+              console.log("Directory watch event received:", event);
+              if (active) {
+                setEvents(prev => [{ 
+                  time: new Date().toLocaleTimeString(), 
+                  type: typeof event.type === 'object' ? JSON.stringify(event.type) : String(event.type),
+                  paths: event.paths || []
+                }, ...prev].slice(0, 50));
+                
+                // Small delay to ensure fs operations complete
+                setTimeout(() => {
+                  if (active) readDirectoryContent(dirPath);
+                }, 100);
+              }
+            }, { recursive: true });
+            
+            if (active) {
+              unlisten = u;
+              console.log("Directory watcher established successfully");
+            } else {
+              u(); // Component unmounted during setup
+            }
+          } else {
+            console.error("FS watch function not available");
+          }
+        } catch (err) {
+          console.error("Watcher error:", err);
+        }
+      }
+    }
+
+    setupWatcher();
+
+    return () => {
+      active = false;
+      if (typeof unlisten === 'function') {
+        console.log("Unwatching:", dirPath);
+        unlisten();
+      }
+    };
+  }, [dirPath]);
+
+  return html`
+    <div class="mt-5">
+      <h1>Directory Watcher</h1>
+      <p>Open a directory to watch for changes and list its contents.</p>
+      
+      <div class="mb-3">
+        <button class="btn btn-primary" onclick=${openDirectory}>Open Directory</button>
+      </div>
+
+      ${error ? html`<div class="alert alert-danger">${error}</div>` : ''}
+
+      ${dirPath ? html`
+        <div class="row">
+          <div class="col-md-6">
+            <div class="card shadow-sm mb-3">
+              <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <span class="text-truncate mr-2"><strong>Directory:</strong> ${dirPath}</span>
+                <button class="btn btn-sm btn-outline-secondary" onclick=${() => readDirectoryContent(dirPath)}>Reload</button>
+              </div>
+              <ul class="list-group list-group-flush" style="max-height: 400px; overflow: auto;">
+                ${files.length === 0 ? html`<li class="list-group-item text-muted">Empty directory</li>` : ''}
+                ${files.map(f => html`
+                  <li class="list-group-item d-flex justify-content-between align-items-center">
+                    ${f.name}
+                    <span class="badge bg-secondary rounded-pill">${f.isDirectory ? 'Dir' : 'File'}</span>
+                  </li>
+                `)}
+              </ul>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card shadow-sm">
+              <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <span><strong>Events (last 50):</strong></span>
+                <button class="btn btn-sm btn-outline-secondary" onclick=${() => setEvents([])}>Clear</button>
+              </div>
+              <div class="card-body p-0">
+                <ul class="list-group list-group-flush" style="max-height: 400px; overflow: auto;">
+                  ${events.length === 0 ? html`<li class="list-group-item text-muted">No events yet</li>` : ''}
+                  ${events.map((e, i) => html`
+                    <li class="list-group-item" key=${i}>
+                      <div class="d-flex w-100 justify-content-between">
+                        <small class="text-muted">${e.time}</small>
+                        <small><strong>${e.type}</strong></small>
+                      </div>
+                      <div class="text-break" style="font-size: 0.85em;">
+                        ${e.paths && e.paths.length ? e.paths.join(', ') : JSON.stringify(e)}
+                      </div>
+                    </li>
+                  `)}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      ` : html`<p class="text-muted">No directory selected.</p>`}
+    </div>
+  `;
+}
+
 function FFmpegScreen() {
   const [output, setOutput] = useState('Checking FFmpeg version...');
   const [error, setError] = useState(null);
@@ -410,6 +559,7 @@ function App() {
     textfile: () => html`<${TextFileScreen} />`,
     ffmpeg: () => html`<${FFmpegScreen} />`,
     ejs: () => html`<${EJSScreen} />`,
+    dirwatcher: () => html`<${DirectoryWatcherScreen} />`,
     'not-found': () => html`
       <div class="text-center mt-5">
         <h1>404 - Not Found</h1>
@@ -464,6 +614,10 @@ function App() {
               <li class="nav-item">
                 <a class="nav-link ${route.name === 'ejs' ? 'active fw-bold' : ''}" 
                    href="#" onclick=${(e) => { e.preventDefault(); navigate('ejs'); }}>EJS</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link ${route.name === 'dirwatcher' ? 'active fw-bold' : ''}" 
+                   href="#" onclick=${(e) => { e.preventDefault(); navigate('dirwatcher'); }}>Dir Watcher</a>
               </li>
             </ul>
             <span id="opened-file" class="navbar-text">

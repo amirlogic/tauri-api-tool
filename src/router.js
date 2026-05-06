@@ -33,6 +33,10 @@ export function parseRoute(hash = '') {
     return { name: 'ejs', params: {}, path: '/ejs' };
   }
 
+  if (segments[0] === 'dirwatcher') {
+    return { name: 'dirwatcher', params: {}, path: '/dirwatcher' };
+  }
+
   return { name: 'not-found', params: { path: normalizedPath }, path: normalizedPath };
 }
 
@@ -54,6 +58,9 @@ export function buildRoutePath(name = 'home', params = {}) {
   }
   if (name === 'ejs') {
     return '/ejs';
+  }
+  if (name === 'dirwatcher') {
+    return '/dirwatcher';
   }
   return '/';
 }
