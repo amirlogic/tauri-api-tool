@@ -409,6 +409,13 @@ window.addEventListener("DOMContentLoaded", () => {
               window.dispatchEvent(new CustomEvent('tauri-menu-command', { detail: 'navigate-ejs' }));
             },
           }),
+          await MenuItem.new({
+            id: 'dirwatcher',
+            text: 'Dir Watcher',
+            action: async () => {
+              window.dispatchEvent(new CustomEvent('tauri-menu-command', { detail: 'navigate-dirwatcher' }));
+            },
+          }),
         ]
       })
 
