@@ -416,6 +416,17 @@ window.addEventListener("DOMContentLoaded", () => {
               window.dispatchEvent(new CustomEvent('tauri-menu-command', { detail: 'navigate-dirwatcher' }));
             },
           }),
+          await PredefinedMenuItem.new({
+            text: 'separator-text',
+            item: 'Separator',
+          }),
+          await MenuItem.new({
+            id: 'http',
+            text: 'HTTP Server',
+            action: async () => {
+              window.dispatchEvent(new CustomEvent('tauri-menu-command', { detail: 'navigate-http' }));
+            },
+          }),
         ]
       })
 
