@@ -504,6 +504,57 @@ function EJSScreen() {
   `;
 }
 
+function HttpScreen() {
+  const [status, setStatus] = useState('Checking...');
+  const [error, setError] = useState(null);
+
+  async function checkServer() {
+    setStatus('Checking...');
+    setError(null);
+    try {
+      // Allow for Tauri http plugin or standard fetch
+      const tauriHttp = window.__TAURI__?.http;
+      const fetchFn = tauriHttp ? tauriHttp.fetch : window.fetch;
+      
+      const res = await fetchFn('http://localhost:3000', {
+        method: 'GET',
+      });
+      if (res.ok) {
+        setStatus('Server is running (200 OK)');
+      } else {
+        setStatus(`Server responded with status: ${res.status}`);
+      }
+    } catch (err) {
+      setError(`Failed to connect: ${err.toString()}`);
+      setStatus('Server is not running or unreachable');
+    }
+  }
+
+  useEffect(() => {
+    checkServer();
+  }, []);
+
+  return html`
+    <div class="mt-5">
+      <h1>HTTP Server Status</h1>
+      <p>Checking if the development server is running at <code>http://localhost:3000</code></p>
+      
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <h5 class="card-title">Status</h5>
+          ${error ? html`<div class="alert alert-danger">${error}</div>` : ''}
+          <div class="alert ${status.includes('running (200 OK)') ? 'alert-success' : (error ? 'alert-secondary' : 'alert-info')}">
+            <strong>${status}</strong>
+          </div>
+          <button class="btn btn-primary" onclick=${checkServer}>
+            Check Again
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 function App() {
   const [route, navigate] = useHashRoute();
   const [count, setCount] = useState(0);
@@ -560,6 +611,7 @@ function App() {
     ffmpeg: () => html`<${FFmpegScreen} />`,
     ejs: () => html`<${EJSScreen} />`,
     dirwatcher: () => html`<${DirectoryWatcherScreen} />`,
+    http: () => html`<${HttpScreen} />`,
     'not-found': () => html`
       <div class="text-center mt-5">
         <h1>404 - Not Found</h1>
@@ -618,6 +670,10 @@ function App() {
               <li class="nav-item">
                 <a class="nav-link ${route.name === 'dirwatcher' ? 'active fw-bold' : ''}" 
                    href="#" onclick=${(e) => { e.preventDefault(); navigate('dirwatcher'); }}>Dir Watcher</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link ${route.name === 'http' ? 'active fw-bold' : ''}" 
+                   href="#" onclick=${(e) => { e.preventDefault(); navigate('http'); }}>HTTP</a>
               </li>
             </ul>
             <span id="opened-file" class="navbar-text">

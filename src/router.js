@@ -37,6 +37,10 @@ export function parseRoute(hash = '') {
     return { name: 'dirwatcher', params: {}, path: '/dirwatcher' };
   }
 
+  if (segments[0] === 'http') {
+    return { name: 'http', params: {}, path: '/http' };
+  }
+
   return { name: 'not-found', params: { path: normalizedPath }, path: normalizedPath };
 }
 
@@ -61,6 +65,9 @@ export function buildRoutePath(name = 'home', params = {}) {
   }
   if (name === 'dirwatcher') {
     return '/dirwatcher';
+  }
+  if (name === 'http') {
+    return '/http';
   }
   return '/';
 }
