@@ -179,38 +179,80 @@ function TextFileScreen() {
 
 function DirectoryWatcherScreen() {
   const [dirPath, setDirPath] = useState('');
-  const [files, setFiles] = useState([]);
   const [error, setError] = useState(null);
-  const [events, setEvents] = useState([]);
+  const [watchedFiles, setWatchedFiles] = useState([]);   // { path, name, checked }
+  const [destinations, setDestinations] = useState([]);    // persisted list
+  const [selectedDest, setSelectedDest] = useState('');
+  const [db, setDb] = useState(null);
+  const [moveStatus, setMoveStatus] = useState(null);
 
-  async function openDirectory() {
+  // ── DB: load / persist destination list ──────────────────────────
+  useEffect(() => {
+    async function initDb() {
+      try {
+        const Database = window.__TAURI__.sql;
+        if (!Database) return;
+        const conn = await Database.load("sqlite:test.db");
+        await conn.execute(
+          "CREATE TABLE IF NOT EXISTS watcher_destinations (id INTEGER PRIMARY KEY AUTOINCREMENT, path TEXT UNIQUE)"
+        );
+        setDb(conn);
+        const rows = await conn.select("SELECT * FROM watcher_destinations ORDER BY id");
+        setDestinations(rows.map(r => r.path));
+        if (rows.length > 0) setSelectedDest(rows[0].path);
+      } catch (err) {
+        console.error("DB init error:", err);
+      }
+    }
+    initDb();
+  }, []);
+
+  async function addDestination(path) {
+    if (!path || destinations.includes(path)) return;
+    try {
+      if (db) await db.execute("INSERT OR IGNORE INTO watcher_destinations (path) VALUES (?)", [path]);
+      setDestinations(prev => [...prev, path]);
+      setSelectedDest(path);
+    } catch (err) {
+      console.error("Failed to save destination:", err);
+    }
+  }
+
+  async function removeDestination(path) {
+    try {
+      if (db) await db.execute("DELETE FROM watcher_destinations WHERE path = ?", [path]);
+      setDestinations(prev => prev.filter(d => d !== path));
+      setSelectedDest(prev => prev === path ? (destinations[0] || '') : prev);
+    } catch (err) {
+      console.error("Failed to remove destination:", err);
+    }
+  }
+
+  async function browseDestination() {
     try {
       const { open } = window.__TAURI__.dialog || {};
       if (!open) throw new Error("Dialog plugin not available");
-      const selected = await open({
-        directory: true,
-        multiple: false
-      });
-
-      if (selected) {
-        setDirPath(selected);
-        await readDirectoryContent(selected);
-        setEvents([]);
-      }
+      const selected = await open({ directory: true, multiple: false });
+      if (selected) await addDestination(selected);
     } catch (err) {
       setError(err.toString());
     }
   }
 
-  async function readDirectoryContent(path) {
+  // ── Watch source folder ──────────────────────────────────────────
+  async function openDirectory() {
     try {
-      const { readDir } = window.__TAURI__.fs || {};
-      if (!readDir) throw new Error("FS plugin not available");
-      const entries = await readDir(path);
-      setFiles(entries);
-      setError(null);
+      const { open } = window.__TAURI__.dialog || {};
+      if (!open) throw new Error("Dialog plugin not available");
+      const selected = await open({ directory: true, multiple: false });
+      if (selected) {
+        setDirPath(selected);
+        setWatchedFiles([]);
+        setError(null);
+        setMoveStatus(null);
+      }
     } catch (err) {
-      setError(`Failed to read directory: ${err.toString()}`);
+      setError(err.toString());
     }
   }
 
@@ -226,25 +268,26 @@ function DirectoryWatcherScreen() {
           if (watch) {
             const u = await watch(dirPath, (event) => {
               console.log("Directory watch event received:", event);
-              if (active) {
-                setEvents(prev => [{ 
-                  time: new Date().toLocaleTimeString(), 
-                  type: typeof event.type === 'object' ? JSON.stringify(event.type) : String(event.type),
-                  paths: event.paths || []
-                }, ...prev].slice(0, 50));
-                
-                // Small delay to ensure fs operations complete
-                setTimeout(() => {
-                  if (active) readDirectoryContent(dirPath);
-                }, 100);
+              if (active && event.paths && event.paths.length) {
+                setWatchedFiles(prev => {
+                  const updated = [...prev];
+                  for (const p of event.paths) {
+                    // Extract filename from full path
+                    const name = p.replace(/\\/g, '/').split('/').pop();
+                    if (name && !updated.find(f => f.path === p)) {
+                      updated.push({ path: p, name, checked: false });
+                    }
+                  }
+                  return updated;
+                });
               }
-            }, { recursive: true });
-            
+            }, { recursive: false });
+
             if (active) {
               unlisten = u;
               console.log("Directory watcher established successfully");
             } else {
-              u(); // Component unmounted during setup
+              u();
             }
           } else {
             console.error("FS watch function not available");
@@ -266,62 +309,120 @@ function DirectoryWatcherScreen() {
     };
   }, [dirPath]);
 
+  // ── Checkbox helpers ─────────────────────────────────────────────
+  function toggleFile(index) {
+    setWatchedFiles(prev => prev.map((f, i) => i === index ? { ...f, checked: !f.checked } : f));
+  }
+
+  function toggleAll(checked) {
+    setWatchedFiles(prev => prev.map(f => ({ ...f, checked })));
+  }
+
+  const checkedCount = watchedFiles.filter(f => f.checked).length;
+
+  // ── Move checked files ──────────────────────────────────────────
+  async function moveChecked() {
+    if (!selectedDest) { setError("Select a destination directory first."); return; }
+    const toMove = watchedFiles.filter(f => f.checked);
+    if (toMove.length === 0) return;
+
+    setMoveStatus(`Moving ${toMove.length} file(s)…`);
+    setError(null);
+
+    try {
+      const { rename } = window.__TAURI__.fs || {};
+      if (!rename) throw new Error("FS plugin not available");
+
+      let moved = 0;
+      for (const f of toMove) {
+        const dest = selectedDest.replace(/[\\/]$/, '') + '\\' + f.name;
+        await rename(f.path, dest);
+        moved++;
+      }
+
+      // Remove moved files from list
+      const movedPaths = new Set(toMove.map(f => f.path));
+      setWatchedFiles(prev => prev.filter(f => !movedPaths.has(f.path)));
+      setMoveStatus(`Successfully moved ${moved} file(s).`);
+    } catch (err) {
+      setError(`Move failed: ${err.toString()}`);
+      setMoveStatus(null);
+    }
+  }
+
+  // ── Render ──────────────────────────────────────────────────────
   return html`
     <div class="mt-5">
       <h1>Directory Watcher</h1>
-      <p>Open a directory to watch for changes and list its contents.</p>
-      
+      <p>Watch a folder for new files, select them, and move to a destination.</p>
+
+      <!-- Source folder -->
       <div class="mb-3">
-        <button class="btn btn-primary" onclick=${openDirectory}>Open Directory</button>
+        <button class="btn btn-primary" onclick=${openDirectory}>📂 Select Watch Folder</button>
+        ${dirPath ? html`<span class="ms-3 text-muted text-truncate" style="font-size:0.9rem;">${dirPath}</span>` : ''}
+      </div>
+
+      <!-- Destination selector -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light"><strong>Destination Directory</strong></div>
+        <div class="card-body">
+          <div class="input-group">
+            <select class="form-select" value=${selectedDest}
+                    onchange=${(e) => setSelectedDest(e.target.value)}>
+              ${destinations.length === 0
+                ? html`<option value="" disabled selected>No destinations saved</option>`
+                : destinations.map(d => html`<option value=${d} selected=${d === selectedDest}>${d}</option>`)
+              }
+            </select>
+            <button class="btn btn-outline-secondary" onclick=${browseDestination} title="Browse for a new destination">+ Add</button>
+          </div>
+          ${selectedDest ? html`
+            <div class="mt-2 d-flex justify-content-between align-items-center">
+              <small class="text-muted text-truncate">${selectedDest}</small>
+              <button class="btn btn-sm btn-outline-danger" onclick=${() => removeDestination(selectedDest)}>Remove from list</button>
+            </div>
+          ` : ''}
+        </div>
       </div>
 
       ${error ? html`<div class="alert alert-danger">${error}</div>` : ''}
+      ${moveStatus ? html`<div class="alert alert-info">${moveStatus}</div>` : ''}
 
+      <!-- Watched files -->
       ${dirPath ? html`
-        <div class="row">
-          <div class="col-md-6">
-            <div class="card shadow-sm mb-3">
-              <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                <span class="text-truncate mr-2"><strong>Directory:</strong> ${dirPath}</span>
-                <button class="btn btn-sm btn-outline-secondary" onclick=${() => readDirectoryContent(dirPath)}>Reload</button>
-              </div>
-              <ul class="list-group list-group-flush" style="max-height: 400px; overflow: auto;">
-                ${files.length === 0 ? html`<li class="list-group-item text-muted">Empty directory</li>` : ''}
-                ${files.map(f => html`
-                  <li class="list-group-item d-flex justify-content-between align-items-center">
-                    ${f.name}
-                    <span class="badge bg-secondary rounded-pill">${f.isDirectory ? 'Dir' : 'File'}</span>
-                  </li>
-                `)}
-              </ul>
+        <div class="card shadow-sm">
+          <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <span><strong>Watched Files</strong> (${watchedFiles.length})</span>
+            <div class="d-flex gap-2">
+              ${watchedFiles.length > 0 ? html`
+                <button class="btn btn-sm btn-outline-secondary" onclick=${() => toggleAll(true)}>Select All</button>
+                <button class="btn btn-sm btn-outline-secondary" onclick=${() => toggleAll(false)}>Deselect</button>
+              ` : ''}
+              <button class="btn btn-sm btn-outline-secondary" onclick=${() => setWatchedFiles([])}>Clear</button>
             </div>
           </div>
-          <div class="col-md-6">
-            <div class="card shadow-sm">
-              <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                <span><strong>Events (last 50):</strong></span>
-                <button class="btn btn-sm btn-outline-secondary" onclick=${() => setEvents([])}>Clear</button>
-              </div>
-              <div class="card-body p-0">
-                <ul class="list-group list-group-flush" style="max-height: 400px; overflow: auto;">
-                  ${events.length === 0 ? html`<li class="list-group-item text-muted">No events yet</li>` : ''}
-                  ${events.map((e, i) => html`
-                    <li class="list-group-item" key=${i}>
-                      <div class="d-flex w-100 justify-content-between">
-                        <small class="text-muted">${e.time}</small>
-                        <small><strong>${e.type}</strong></small>
-                      </div>
-                      <div class="text-break" style="font-size: 0.85em;">
-                        ${e.paths && e.paths.length ? e.paths.join(', ') : JSON.stringify(e)}
-                      </div>
-                    </li>
-                  `)}
-                </ul>
-              </div>
+          <ul class="list-group list-group-flush" style="max-height: 400px; overflow: auto;">
+            ${watchedFiles.length === 0
+              ? html`<li class="list-group-item text-muted">No files detected yet. Waiting for changes…</li>`
+              : watchedFiles.map((f, i) => html`
+                <li class="list-group-item d-flex align-items-center gap-2" key=${f.path}>
+                  <input class="form-check-input mt-0" type="checkbox"
+                         checked=${f.checked} onchange=${() => toggleFile(i)} />
+                  <span class="text-truncate" title=${f.path}>${f.name}</span>
+                </li>
+              `)
+            }
+          </ul>
+          ${checkedCount > 0 ? html`
+            <div class="card-footer d-flex justify-content-between align-items-center">
+              <span>${checkedCount} file(s) selected</span>
+              <button class="btn btn-success" onclick=${moveChecked} disabled=${!selectedDest}>
+                Move to destination →
+              </button>
             </div>
-          </div>
+          ` : ''}
         </div>
-      ` : html`<p class="text-muted">No directory selected.</p>`}
+      ` : html`<p class="text-muted">No watch folder selected.</p>`}
     </div>
   `;
 }
