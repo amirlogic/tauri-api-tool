@@ -396,6 +396,17 @@ window.addEventListener("DOMContentLoaded", () => {
             },
           }),
           await MenuItem.new({
+            id: 'git',
+            text: 'Git',
+            action: async () => {
+              window.dispatchEvent(new CustomEvent('tauri-menu-command', { detail: 'navigate-git' }));
+            },
+          }),
+          await PredefinedMenuItem.new({
+            text: 'separator-text',
+            item: 'Separator',
+          }),
+          await MenuItem.new({
             id: 'textfile',
             text: 'Text File',
             action: async () => {

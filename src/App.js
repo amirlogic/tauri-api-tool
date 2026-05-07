@@ -504,53 +504,188 @@ function EJSScreen() {
   `;
 }
 
-function HttpScreen() {
-  const [status, setStatus] = useState('Checking...');
+function GitScreen() {
+  const [dirPath, setDirPath] = useState('');
+  const [branch, setBranch] = useState(null);
+  const [gitStatus, setGitStatus] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  async function checkServer() {
-    setStatus('Checking...');
-    setError(null);
+  async function selectFolder() {
     try {
-      // Allow for Tauri http plugin or standard fetch
-      const tauriHttp = window.__TAURI__?.http;
-      const fetchFn = tauriHttp ? tauriHttp.fetch : window.fetch;
-      
-      const res = await fetchFn('http://localhost:3000', {
-        method: 'GET',
-      });
-      if (res.ok) {
-        setStatus('Server is running (200 OK)');
-      } else {
-        setStatus(`Server responded with status: ${res.status}`);
+      const { open } = window.__TAURI__.dialog || {};
+      if (!open) throw new Error('Dialog plugin not available');
+      const selected = await open({ directory: true, multiple: false });
+      if (selected) {
+        setDirPath(selected);
+        setBranch(null);
+        setGitStatus(null);
+        setError(null);
+        await runGitCommands(selected);
       }
     } catch (err) {
-      setError(`Failed to connect: ${err.toString()}`);
-      setStatus('Server is not running or unreachable');
+      setError(err.toString());
     }
   }
 
-  useEffect(() => {
-    checkServer();
-  }, []);
+  async function runGitCommands(cwd) {
+    setLoading(true);
+    setError(null);
+    try {
+      const { Command } = window.__TAURI__.shell || {};
+      if (!Command) throw new Error('Shell plugin not available');
+
+      // git rev-parse --abbrev-ref HEAD  → current branch name
+      const branchCmd = await Command.create('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd });
+      const branchResult = await branchCmd.execute();
+      if (branchResult.code !== 0) {
+        throw new Error(branchResult.stderr || 'git branch check failed');
+      }
+      setBranch(branchResult.stdout.trim());
+
+      // git status
+      const statusCmd = await Command.create('git', ['status'], { cwd });
+      const statusResult = await statusCmd.execute();
+      if (statusResult.code !== 0) {
+        throw new Error(statusResult.stderr || 'git status failed');
+      }
+      setGitStatus(statusResult.stdout);
+    } catch (err) {
+      setError(err.toString());
+      setBranch(null);
+      setGitStatus(null);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const branchBadgeClass = branch
+    ? (branch === 'main' || branch === 'master' ? 'bg-success' : 'bg-primary')
+    : 'bg-secondary';
 
   return html`
     <div class="mt-5">
-      <h1>HTTP Server Status</h1>
-      <p>Checking if the development server is running at <code>http://localhost:3000</code></p>
-      
-      <div class="card shadow-sm mb-4">
-        <div class="card-body">
-          <h5 class="card-title">Status</h5>
-          ${error ? html`<div class="alert alert-danger">${error}</div>` : ''}
-          <div class="alert ${status.includes('running (200 OK)') ? 'alert-success' : (error ? 'alert-secondary' : 'alert-info')}">
-            <strong>${status}</strong>
-          </div>
-          <button class="btn btn-primary" onclick=${checkServer}>
-            Check Again
+      <h1>Git Inspector</h1>
+      <p>Select a folder to inspect its current branch and working-tree status.</p>
+
+      <div class="mb-4">
+        <button class="btn btn-primary" onclick=${selectFolder} disabled=${loading}>
+          ${loading ? 'Running…' : '📁 Select Folder'}
+        </button>
+        ${dirPath ? html`
+          <button class="btn btn-outline-secondary ms-2" onclick=${() => runGitCommands(dirPath)} disabled=${loading}>
+            🔄 Refresh
           </button>
-        </div>
+        ` : ''}
       </div>
+
+      ${error ? html`<div class="alert alert-danger"><strong>Error:</strong> ${error}</div>` : ''}
+
+      ${dirPath ? html`
+        <div class="card shadow-sm mb-3">
+          <div class="card-header bg-light d-flex align-items-center gap-2">
+            <span class="text-truncate"><strong>Folder:</strong> ${dirPath}</span>
+          </div>
+          <div class="card-body">
+            <div class="mb-3">
+              <h5 class="card-title mb-2">Current Branch</h5>
+              ${branch
+                ? html`<span class="badge ${branchBadgeClass} fs-6 px-3 py-2">🌿 ${branch}</span>`
+                : html`<span class="text-muted">—</span>`
+              }
+            </div>
+
+            <div>
+              <h5 class="card-title mb-2">Git Status</h5>
+              ${gitStatus
+                ? html`<pre class="bg-dark text-light p-3 rounded" style="max-height:400px;overflow:auto;font-size:0.85rem;">${gitStatus}</pre>`
+                : html`<span class="text-muted">—</span>`
+              }
+            </div>
+          </div>
+        </div>
+      ` : html`<p class="text-muted">No folder selected.</p>`}
+    </div>
+  `;
+}
+
+function HttpScreen() {
+  const [url, setUrl] = useState('http://localhost:3000');
+  const [statusCode, setStatusCode] = useState(null);
+  const [pageTitle, setPageTitle] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  async function checkServer() {
+    const targetUrl = url.trim();
+    if (!targetUrl) return;
+
+    setLoading(true);
+    setError(null);
+    setStatusCode(null);
+    setPageTitle(null);
+    try {
+      // Prefer Tauri http plugin (bypasses CORS), fall back to standard fetch
+      const tauriHttp = window.__TAURI__?.http;
+      const fetchFn = tauriHttp ? tauriHttp.fetch : window.fetch;
+
+      const res = await fetchFn(targetUrl, { method: 'GET' });
+      setStatusCode(res.status);
+
+      // Read body and extract <title>
+      const body = await res.text();
+      const match = body.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+      setPageTitle(match ? match[1].trim() : '(no title found)');
+    } catch (err) {
+      setError(`Failed to connect: ${err.toString()}`);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function statusBadgeClass(code) {
+    if (!code) return 'bg-secondary';
+    if (code >= 200 && code < 300) return 'bg-success';
+    if (code >= 300 && code < 400) return 'bg-info';
+    if (code >= 400 && code < 500) return 'bg-warning text-dark';
+    return 'bg-danger';
+  }
+
+  function handleKeyDown(e) {
+    if (e.key === 'Enter') checkServer();
+  }
+
+  return html`
+    <div class="mt-5">
+      <h1>HTTP Checker</h1>
+      <p>Enter a URL to check whether the server is reachable, view its status code and page title.</p>
+
+      <div class="input-group mb-4">
+        <input type="text" class="form-control" placeholder="http://localhost:3000"
+               value=${url} oninput=${(e) => setUrl(e.target.value)}
+               onkeydown=${handleKeyDown} />
+        <button class="btn btn-primary" onclick=${checkServer} disabled=${loading}>
+          ${loading ? 'Checking…' : 'Check'}
+        </button>
+      </div>
+
+      ${error ? html`<div class="alert alert-danger"><strong>Error:</strong> ${error}</div>` : ''}
+
+      ${statusCode !== null ? html`
+        <div class="card shadow-sm mb-4">
+          <div class="card-body">
+            <div class="d-flex align-items-center gap-3 mb-3">
+              <h5 class="card-title mb-0">Status Code</h5>
+              <span class="badge ${statusBadgeClass(statusCode)} fs-6 px-3 py-2">${statusCode}</span>
+            </div>
+
+            <div>
+              <h5 class="card-title mb-2">Page Title</h5>
+              <p class="fs-5 mb-0">${pageTitle}</p>
+            </div>
+          </div>
+        </div>
+      ` : (!loading && !error ? html`<p class="text-muted">Press <strong>Check</strong> to send a request.</p>` : '')}
     </div>
   `;
 }
@@ -612,6 +747,7 @@ function App() {
     ejs: () => html`<${EJSScreen} />`,
     dirwatcher: () => html`<${DirectoryWatcherScreen} />`,
     http: () => html`<${HttpScreen} />`,
+    git: () => html`<${GitScreen} />`,
     'not-found': () => html`
       <div class="text-center mt-5">
         <h1>404 - Not Found</h1>
@@ -674,6 +810,10 @@ function App() {
               <li class="nav-item">
                 <a class="nav-link ${route.name === 'http' ? 'active fw-bold' : ''}" 
                    href="#" onclick=${(e) => { e.preventDefault(); navigate('http'); }}>HTTP</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link ${route.name === 'git' ? 'active fw-bold' : ''}" 
+                   href="#" onclick=${(e) => { e.preventDefault(); navigate('git'); }}>Git</a>
               </li>
             </ul>
             <span id="opened-file" class="navbar-text">

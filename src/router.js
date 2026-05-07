@@ -41,6 +41,10 @@ export function parseRoute(hash = '') {
     return { name: 'http', params: {}, path: '/http' };
   }
 
+  if (segments[0] === 'git') {
+    return { name: 'git', params: {}, path: '/git' };
+  }
+
   return { name: 'not-found', params: { path: normalizedPath }, path: normalizedPath };
 }
 
@@ -68,6 +72,9 @@ export function buildRoutePath(name = 'home', params = {}) {
   }
   if (name === 'http') {
     return '/http';
+  }
+  if (name === 'git') {
+    return '/git';
   }
   return '/';
 }
