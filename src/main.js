@@ -438,6 +438,35 @@ window.addEventListener("DOMContentLoaded", () => {
               window.dispatchEvent(new CustomEvent('tauri-menu-command', { detail: 'navigate-http' }));
             },
           }),
+          await PredefinedMenuItem.new({
+            text: 'separator-text',
+            item: 'Separator',
+          }),
+          await MenuItem.new({
+            id: 'ollama',
+            text: 'Ollama',
+            action: async () => {
+              window.dispatchEvent(new CustomEvent('tauri-menu-command', { detail: 'navigate-ollama' }));
+            },
+          }),
+          await MenuItem.new({
+            id: 'lmstudio',
+            text: 'LM Studio',
+            action: async () => {
+              window.dispatchEvent(new CustomEvent('tauri-menu-command', { detail: 'navigate-lmstudio' }));
+            },
+          }),
+          await PredefinedMenuItem.new({
+            text: 'separator-text',
+            item: 'Separator',
+          }),
+          await MenuItem.new({
+            id: 'api-keys',
+            text: 'API Keys',
+            action: async () => {
+              window.dispatchEvent(new CustomEvent('tauri-menu-command', { detail: 'navigate-api-keys' }));
+            },
+          }),
         ]
       })
 

@@ -45,6 +45,18 @@ export function parseRoute(hash = '') {
     return { name: 'git', params: {}, path: '/git' };
   }
 
+  if (segments[0] === 'ollama') {
+    return { name: 'ollama', params: {}, path: '/ollama' };
+  }
+
+  if (segments[0] === 'lmstudio') {
+    return { name: 'lmstudio', params: {}, path: '/lmstudio' };
+  }
+
+  if (segments[0] === 'api-keys') {
+    return { name: 'api-keys', params: {}, path: '/api-keys' };
+  }
+
   return { name: 'not-found', params: { path: normalizedPath }, path: normalizedPath };
 }
 
@@ -75,6 +87,15 @@ export function buildRoutePath(name = 'home', params = {}) {
   }
   if (name === 'git') {
     return '/git';
+  }
+  if (name === 'ollama') {
+    return '/ollama';
+  }
+  if (name === 'lmstudio') {
+    return '/lmstudio';
+  }
+  if (name === 'api-keys') {
+    return '/api-keys';
   }
   return '/';
 }
