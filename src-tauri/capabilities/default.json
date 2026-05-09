@@ -200,6 +200,12 @@
       "allow": [
         {
           "url": "http://localhost:*/"
+        },
+        {
+          "url": "https://ollama.com/*"
+        },
+        {
+          "url": "https://openrouter.ai*"
         }
       ],
       "deny": []

@@ -124,7 +124,7 @@ function TextFileScreen() {
                 if (active) readFileContent(filePath);
               }, 100);
             });
-            
+
             if (active) {
               unlisten = u;
               console.log("Watcher established successfully");
@@ -370,9 +370,9 @@ function DirectoryWatcherScreen() {
             <select class="form-select" value=${selectedDest}
                     onchange=${(e) => setSelectedDest(e.target.value)}>
               ${destinations.length === 0
-                ? html`<option value="" disabled selected>No destinations saved</option>`
-                : destinations.map(d => html`<option value=${d} selected=${d === selectedDest}>${d}</option>`)
-              }
+      ? html`<option value="" disabled selected>No destinations saved</option>`
+      : destinations.map(d => html`<option value=${d} selected=${d === selectedDest}>${d}</option>`)
+    }
             </select>
             <button class="btn btn-outline-secondary" onclick=${browseDestination} title="Browse for a new destination">+ Add</button>
           </div>
@@ -403,15 +403,15 @@ function DirectoryWatcherScreen() {
           </div>
           <ul class="list-group list-group-flush" style="max-height: 400px; overflow: auto;">
             ${watchedFiles.length === 0
-              ? html`<li class="list-group-item text-muted">No files detected yet. Waiting for changes…</li>`
-              : watchedFiles.map((f, i) => html`
+        ? html`<li class="list-group-item text-muted">No files detected yet. Waiting for changes…</li>`
+        : watchedFiles.map((f, i) => html`
                 <li class="list-group-item d-flex align-items-center gap-2" key=${f.path}>
                   <input class="form-check-input mt-0" type="checkbox"
                          checked=${f.checked} onchange=${() => toggleFile(i)} />
                   <span class="text-truncate" title=${f.path}>${f.name}</span>
                 </li>
               `)
-            }
+      }
           </ul>
           ${checkedCount > 0 ? html`
             <div class="card-footer d-flex justify-content-between align-items-center">
@@ -438,7 +438,7 @@ function FFmpegScreen() {
         if (!Command) throw new Error("Shell plugin not available");
         const cmd = await Command.create('ffmpeg', ['-version']);
         const result = await cmd.execute();
-        
+
         if (result.code === 0) {
           setOutput(result.stdout);
         } else {
@@ -887,8 +887,8 @@ function GitScreen() {
           <div class="card-header bg-light d-flex align-items-center gap-2">
             <span class="text-truncate"><strong>Folder:</strong> ${dirPath}</span>
             ${branch
-              ? html`<span class="badge ${branchBadgeClass} ms-auto px-3 py-2">🌿 ${branch}</span>`
-              : ''}
+        ? html`<span class="badge ${branchBadgeClass} ms-auto px-3 py-2">🌿 ${branch}</span>`
+        : ''}
           </div>
         </div>
 
@@ -921,13 +921,13 @@ function GitScreen() {
           <!-- Local branches list -->
           <ul class="list-group list-group-flush" style="max-height:220px;overflow:auto;">
             ${branches.filter(b => !b.remote).length === 0
-              ? html`<li class="list-group-item text-muted">No local branches found.</li>`
-              : branches.filter(b => !b.remote).map(b => html`
+        ? html`<li class="list-group-item text-muted">No local branches found.</li>`
+        : branches.filter(b => !b.remote).map(b => html`
                 <li class="list-group-item d-flex justify-content-between align-items-center py-1" key=${b.name}>
                   <div class="d-flex align-items-center gap-2">
                     ${b.current
-                      ? html`<span class="badge bg-success">current</span>`
-                      : html`<span class="badge bg-light text-muted border">local</span>`}
+            ? html`<span class="badge bg-success">current</span>`
+            : html`<span class="badge bg-light text-muted border">local</span>`}
                     <span class=${b.current ? 'fw-semibold' : ''}>${b.name}</span>
                   </div>
                   ${!b.current ? html`
@@ -937,7 +937,7 @@ function GitScreen() {
                   ` : html`<span class="text-success">✓ active</span>`}
                 </li>
               `)
-            }
+      }
           </ul>
 
           <!-- Remote branches (collapsed) -->
@@ -1026,9 +1026,9 @@ function GitScreen() {
           <div class="card-header bg-light"><strong>Git Status (raw)</strong></div>
           <div class="card-body p-0">
             ${gitStatus
-              ? html`<pre class="bg-dark text-light p-3 m-0 rounded-bottom" style="max-height:300px;overflow:auto;font-size:0.85rem;">${gitStatus}</pre>`
-              : html`<p class="text-muted p-3 m-0">—</p>`
-            }
+        ? html`<pre class="bg-dark text-light p-3 m-0 rounded-bottom" style="max-height:300px;overflow:auto;font-size:0.85rem;">${gitStatus}</pre>`
+        : html`<p class="text-muted p-3 m-0">—</p>`
+      }
           </div>
         </div>
       ` : html`<p class="text-muted">No folder selected.</p>`}
@@ -1290,8 +1290,8 @@ function ApiKeysScreen() {
           <strong>Stored Keys (${keys.length})</strong>
         </div>
         ${keys.length === 0
-          ? html`<div class="card-body"><p class="text-muted mb-0">No API keys stored yet.</p></div>`
-          : html`
+      ? html`<div class="card-body"><p class="text-muted mb-0">No API keys stored yet.</p></div>`
+      : html`
             <div class="table-responsive">
               <table class="table table-hover mb-0">
                 <thead class="table-light">
@@ -1305,8 +1305,8 @@ function ApiKeysScreen() {
                 </thead>
                 <tbody>
                   ${keys.map(row => {
-                    const revealed = revealedIds.includes(row.id);
-                    return html`
+        const revealed = revealedIds.includes(row.id);
+        return html`
                       <tr key=${row.id} class=${editingId === row.id ? 'table-active' : ''}>
                         <td>${row.name}</td>
                         <td><span class="badge bg-secondary">${row.provider || '—'}</span></td>
@@ -1326,12 +1326,12 @@ function ApiKeysScreen() {
                         </td>
                       </tr>
                     `;
-                  })}
+      })}
                 </tbody>
               </table>
             </div>
           `
-        }
+    }
       </div>
     </div>
   `;
@@ -1403,8 +1403,8 @@ function LLMScreen({ provider: initialProvider }) {
       <!-- Provider tabs -->
       <ul class="nav nav-tabs mb-4">
         ${providerKeys.map(key => {
-          const p = providers[key];
-          return html`
+    const p = providers[key];
+    return html`
             <li class="nav-item" key=${key}>
               <button class="nav-link ${provider === key ? 'active' : ''}"
                       onclick=${() => setProvider(key)}>
@@ -1412,7 +1412,7 @@ function LLMScreen({ provider: initialProvider }) {
               </button>
             </li>
           `;
-        })}
+  })}
       </ul>
 
       <!-- Settings card -->
@@ -1488,10 +1488,10 @@ function LLMScreen({ provider: initialProvider }) {
         </div>
         <div class="card-body p-0">
           ${response
-            ? html`<pre class="bg-dark text-light p-3 m-0 rounded-bottom"
+      ? html`<pre class="bg-dark text-light p-3 m-0 rounded-bottom"
                         style="max-height:400px;overflow:auto;white-space:pre-wrap;font-size:0.85rem;">${response}</pre>`
-            : html`<p class="text-muted p-3 m-0">Response will appear here after sending a prompt.</p>`
-          }
+      : html`<p class="text-muted p-3 m-0">Response will appear here after sending a prompt.</p>`
+    }
         </div>
       </div>
     </div>
@@ -1577,7 +1577,7 @@ function App() {
       <nav class="navbar navbar-expand-lg bg-body-tertiary">
         <div class="container-fluid">
           <a class="navbar-brand" href="#" onclick=${(e) => { e.preventDefault(); navigate('home'); }}>
-            Tauri App
+            TMA
           </a>
           
           <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -1586,34 +1586,17 @@ function App() {
           
           <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav me-auto">
-              <li class="nav-item">
-                <a class="nav-link ${route.name === 'home' ? 'active fw-bold' : ''}" 
-                   href="#" onclick=${(e) => { e.preventDefault(); navigate('home'); }}>Home</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link ${route.name === 'about' ? 'active fw-bold' : ''}" 
-                   href="#" onclick=${(e) => { e.preventDefault(); navigate('about'); }}>About</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link ${route.name === 'settings' ? 'active fw-bold' : ''}" 
-                   href="#" onclick=${(e) => { e.preventDefault(); navigate('settings'); }}>Settings</a>
-              </li>
+    
               <li class="nav-item">
                 <a class="nav-link ${route.name === 'database' ? 'active fw-bold' : ''}" 
                    href="#" onclick=${(e) => { e.preventDefault(); navigate('database'); }}>Database</a>
               </li>
-              <li class="nav-item">
-                <a class="nav-link ${route.name === 'textfile' ? 'active fw-bold' : ''}" 
-                   href="#" onclick=${(e) => { e.preventDefault(); navigate('textfile'); }}>Text File</a>
-              </li>
+              
               <li class="nav-item">
                 <a class="nav-link ${route.name === 'ffmpeg' ? 'active fw-bold' : ''}" 
                    href="#" onclick=${(e) => { e.preventDefault(); navigate('ffmpeg'); }}>FFMPEG</a>
               </li>
-              <li class="nav-item">
-                <a class="nav-link ${route.name === 'ejs' ? 'active fw-bold' : ''}" 
-                   href="#" onclick=${(e) => { e.preventDefault(); navigate('ejs'); }}>EJS</a>
-              </li>
+              
               <li class="nav-item">
                 <a class="nav-link ${route.name === 'dirwatcher' ? 'active fw-bold' : ''}" 
                    href="#" onclick=${(e) => { e.preventDefault(); navigate('dirwatcher'); }}>Dir Watcher</a>
@@ -1639,9 +1622,7 @@ function App() {
                    href="#" onclick=${(e) => { e.preventDefault(); navigate('api-keys'); }}>API Keys</a>
               </li>
             </ul>
-            <span id="opened-file" class="navbar-text">
-              Current Route: ${route.name}
-            </span>
+            
           </div>
         </div>
       </nav>
