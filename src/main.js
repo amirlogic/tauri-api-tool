@@ -870,7 +870,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
               const appVersion = await getVersion();
 
-              await message(`Image Tool v${appVersion}\nCreated by Amir Hachaichi\ngithub.com/amirlogic/tauri-image-tool`,
+              await message(`Tauri Multipurpose App v${appVersion}\nCreated by Amir Hachaichi\ngithub.com/amirlogic/tauri-preact-boilerplate`,
                 { title: 'About', kind: 'info' });
             },
           }),

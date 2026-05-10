@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "tauriboilerplate",
-  "version": "0.1.6",
-  "identifier": "com.boilerplate.app",
+  "productName": "Tauri Multifunction",
+  "version": "0.1.7",
+  "identifier": "com.taurimf.app",
   "build": {
     "frontendDist": "../src"
   },

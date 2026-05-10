@@ -428,48 +428,350 @@ function DirectoryWatcherScreen() {
 }
 
 function FFmpegScreen() {
-  const [output, setOutput] = useState('Checking FFmpeg version...');
+  const [filePath, setFilePath] = useState('');
+  const [versionInfo, setVersionInfo] = useState('');
+  const [output, setOutput] = useState('');
   const [error, setError] = useState(null);
+  const [busy, setBusy] = useState(false);
 
+  // ── Form states for each operation ─────────────────────────────────
+  const [convertExt, setConvertExt] = useState('');
+  const [audioFmt, setAudioFmt] = useState('mp3');
+  const [audioBr, setAudioBr] = useState('192k');
+  const [cutFrom, setCutFrom] = useState({ h: '00', m: '00', s: '00' });
+  const [cutTo, setCutTo] = useState({ h: '00', m: '00', s: '00' });
+  const [ssTime, setSsTime] = useState({ h: '00', m: '00', s: '00' });
+  const [scaleMode, setScaleMode] = useState('res');
+  const [scaleValue, setScaleValue] = useState('');
+  const [speedMul, setSpeedMul] = useState('1');
+  const [fpsValue, setFpsValue] = useState('24');
+
+  // ── Helpers ────────────────────────────────────────────────────────
+  function baseName(fp) {
+    return fp.substring(0, fp.lastIndexOf('.'));
+  }
+  function extName(fp) {
+    return fp.substring(fp.lastIndexOf('.'));
+  }
+
+  async function ffmpegExec(args) {
+    const { Command } = window.__TAURI__.shell || {};
+    if (!Command) throw new Error('Shell plugin not available');
+    setBusy(true);
+    setError(null);
+    setOutput(`> ffmpeg ${args.join(' ')}\n\nRunning…`);
+    try {
+      const cmd = await Command.create('ffmpeg', args);
+      const res = await cmd.execute();
+      const out = (res.stdout || '') + (res.stderr || '');
+      if (res.code !== 0) {
+        setError(`ffmpeg exited with code ${res.code}`);
+      }
+      setOutput(`> ffmpeg ${args.join(' ')}\n\n${out}\n\nDone!`);
+    } catch (err) {
+      setError(err.toString());
+      setOutput(`> ffmpeg ${args.join(' ')}\n\nError: ${err.toString()}`);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // ── Check version on mount ─────────────────────────────────────────
   useEffect(() => {
     async function checkVersion() {
       try {
         const { Command } = window.__TAURI__.shell || {};
-        if (!Command) throw new Error("Shell plugin not available");
+        if (!Command) return;
         const cmd = await Command.create('ffmpeg', ['-version']);
         const result = await cmd.execute();
-
-        if (result.code === 0) {
-          setOutput(result.stdout);
-        } else {
-          setError(`Command failed with code ${result.code}: ${result.stderr}`);
-          setOutput(result.stderr);
-        }
+        setVersionInfo(result.code === 0 ? result.stdout : result.stderr);
       } catch (err) {
-        setError(`Failed to execute command: ${err.toString()}`);
-        setOutput('Error executing ffmpeg');
+        setVersionInfo('Could not detect FFmpeg: ' + err.toString());
       }
     }
-
     checkVersion();
   }, []);
 
+  // ── File selection ─────────────────────────────────────────────────
+  async function selectFile() {
+    try {
+      const { open } = window.__TAURI__.dialog || {};
+      if (!open) throw new Error('Dialog plugin not available');
+      const selected = await open({ multiple: false, directory: false });
+      if (selected) {
+        setFilePath(selected);
+        setOutput('');
+        setError(null);
+      }
+    } catch (err) {
+      setError(err.toString());
+    }
+  }
+
+  // ── Operations ─────────────────────────────────────────────────────
+  function doConvert() {
+    if (!convertExt.trim()) return;
+    const ext = convertExt.trim().replace(/^\./, '');
+    ffmpegExec(['-i', filePath, '-map', '0', '-c', 'copy', `${baseName(filePath)}.${ext}`]);
+  }
+
+  function doExtractAudio() {
+    const fnwx = baseName(filePath);
+    const br = audioBr.replace(/[^0-9k]/g, '') || '192k';
+    if (audioFmt === 'mp3') {
+      ffmpegExec(['-i', filePath, '-vn', '-c:a', 'libmp3lame', '-b:a', br, `${fnwx}.mp3`]);
+    } else {
+      ffmpegExec(['-i', filePath, '-vn', '-c:a', 'aac', '-b:a', br, `${fnwx}.m4a`]);
+    }
+  }
+
+  function doReverse() {
+    const ext = extName(filePath);
+    ffmpegExec(['-i', filePath, '-vf', 'reverse', `${baseName(filePath)}_reversed${ext}`]);
+  }
+
+  function doCut() {
+    const from = `${cutFrom.h}:${cutFrom.m}:${cutFrom.s}`;
+    const to = `${cutTo.h}:${cutTo.m}:${cutTo.s}`;
+    const ext = extName(filePath);
+    const suffix = `_${cutFrom.h}${cutFrom.m}${cutFrom.s}_${cutTo.h}${cutTo.m}${cutTo.s}`;
+    ffmpegExec(['-ss', from, '-to', to, '-i', filePath, '-c', 'copy', `${baseName(filePath)}${suffix}${ext}`]);
+  }
+
+  function doScreenshot() {
+    const ts = `${ssTime.h}:${ssTime.m}:${ssTime.s}`;
+    ffmpegExec(['-ss', ts, '-i', filePath, '-frames:v', '1', `${baseName(filePath)}.png`]);
+  }
+
+  function doScale() {
+    const sv = scaleValue.trim();
+    if (!sv) return;
+    let fstr = '';
+    if (scaleMode === 'res') fstr = `scale=${sv}`;
+    else if (scaleMode === 'factor') fstr = `scale=iw${sv}:ih${sv}`;
+    else if (scaleMode === 'asrth') fstr = `scale=-2:${sv}`;
+    else if (scaleMode === 'asrtw') fstr = `scale=${sv}:-2`;
+    if (!fstr) return;
+    const ext = extName(filePath);
+    const safeSv = sv.replace(/[/*:]/g, '');
+    ffmpegExec(['-i', filePath, '-vf', fstr, `${baseName(filePath)}_${safeSv}${ext}`]);
+  }
+
+  function doSpeed() {
+    const m = speedMul.trim() || '1';
+    const ext = extName(filePath);
+    ffmpegExec(['-i', filePath, '-filter:v', `setpts=${m}*PTS`, '-an', `${baseName(filePath)}_${m}${ext}`]);
+  }
+
+  function doFramerate() {
+    const fps = (fpsValue || '24').replace(/[^0-9.]/g, '') || '24';
+    const ext = extName(filePath);
+    ffmpegExec(['-i', filePath, '-filter:v', `fps=${fps}`, '-c:a', 'copy', `${baseName(filePath)}_fps${fps}${ext}`]);
+  }
+
+  // ── Timestamp input helper ─────────────────────────────────────────
+  function tsInputs(state, setter, prefix) {
+    return html`
+      <input type="text" class="form-control form-control-sm d-inline-block" style="width:3rem;"
+             maxlength="2" value=${state.h}
+             oninput=${(e) => setter(prev => ({ ...prev, h: e.target.value }))} />
+      <span class="mx-1">:</span>
+      <input type="text" class="form-control form-control-sm d-inline-block" style="width:3rem;"
+             maxlength="2" value=${state.m}
+             oninput=${(e) => setter(prev => ({ ...prev, m: e.target.value }))} />
+      <span class="mx-1">:</span>
+      <input type="text" class="form-control form-control-sm d-inline-block" style="width:3rem;"
+             maxlength="2" value=${state.s}
+             oninput=${(e) => setter(prev => ({ ...prev, s: e.target.value }))} />
+    `;
+  }
+
+  // ── Render ─────────────────────────────────────────────────────────
   return html`
     <div class="mt-5">
-      <h1>FFmpeg Info</h1>
-      <p>This screen checks and displays the installed FFmpeg version.</p>
+      <h1>FFmpeg Toolbox</h1>
+      <p>Select a media file, then use any operation below.</p>
 
-      ${error ? html`<div class="alert alert-danger">${error}</div>` : ''}
+      <!-- File selection -->
+      <div class="mb-4 d-flex flex-wrap gap-2 align-items-center">
+        <button class="btn btn-primary" onclick=${selectFile} disabled=${busy}>
+          📂 Select File
+        </button>
+        ${filePath ? html`<code class="ms-2 text-truncate" style="max-width:600px;">${filePath}</code>` : ''}
+      </div>
 
-      <div class="form-group mt-3">
-        <label for="ffmpeg-output" class="form-label">FFmpeg Version Output:</label>
-        <textarea id="ffmpeg-output" class="form-control" rows="15" disabled 
-                  style="font-family: monospace; background-color: #f8f9fa;">${output}</textarea>
-      </div>
-      
-      <div class="mt-3">
-        <button class="btn btn-outline-secondary" onclick=${() => window.location.reload()}>Refresh</button>
-      </div>
+      ${error ? html`<div class="alert alert-danger alert-dismissible">
+        ${error}
+        <button type="button" class="btn-close" onclick=${() => setError(null)}></button>
+      </div>` : ''}
+
+      ${filePath ? html`
+        <div class="row g-3 mb-4">
+          <!-- Convert -->
+          <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+              <div class="card-header bg-light"><strong>🔄 Convert</strong></div>
+              <div class="card-body">
+                <div class="input-group">
+                  <span class="input-group-text">New format</span>
+                  <input type="text" class="form-control" placeholder="mp4, mkv, avi…" size="5"
+                         value=${convertExt} oninput=${(e) => setConvertExt(e.target.value)} />
+                  <button class="btn btn-outline-primary" onclick=${doConvert}
+                          disabled=${busy || !convertExt.trim()}>Convert</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Extract Audio -->
+          <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+              <div class="card-header bg-light"><strong>🎧 Extract Audio</strong></div>
+              <div class="card-body">
+                <div class="input-group">
+                  <select class="form-select" style="max-width:5rem;" value=${audioFmt}
+                          onchange=${(e) => setAudioFmt(e.target.value)}>
+                    <option value="mp3">MP3</option>
+                    <option value="m4a">M4A</option>
+                  </select>
+                  <input type="text" class="form-control" style="max-width:5rem;" value=${audioBr}
+                         oninput=${(e) => setAudioBr(e.target.value)} />
+                  <button class="btn btn-outline-primary" onclick=${doExtractAudio}
+                          disabled=${busy}>Extract</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Reverse -->
+          <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+              <div class="card-header bg-light"><strong>⏪ Reverse</strong></div>
+              <div class="card-body">
+                <p class="text-muted mb-2">Reverses the entire video.</p>
+                <button class="btn btn-outline-primary" onclick=${doReverse} disabled=${busy}>
+                  Reverse
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Split / Cut -->
+          <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+              <div class="card-header bg-light"><strong>✂️ Split</strong></div>
+              <div class="card-body">
+                <div class="mb-2 d-flex align-items-center gap-2">
+                  <span style="min-width:3rem;">From:</span>
+                  ${tsInputs(cutFrom, setCutFrom, 'f')}
+                </div>
+                <div class="mb-2 d-flex align-items-center gap-2">
+                  <span style="min-width:3rem;">To:</span>
+                  ${tsInputs(cutTo, setCutTo, 't')}
+                </div>
+                <button class="btn btn-outline-primary" onclick=${doCut} disabled=${busy}>Cut</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Screenshot -->
+          <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+              <div class="card-header bg-light"><strong>📷 Screenshot</strong></div>
+              <div class="card-body">
+                <div class="mb-2 d-flex align-items-center gap-2">
+                  <span>At:</span>
+                  ${tsInputs(ssTime, setSsTime, 'ss')}
+                </div>
+                <button class="btn btn-outline-primary" onclick=${doScreenshot} disabled=${busy}>
+                  Capture
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Change Scale -->
+          <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+              <div class="card-header bg-light"><strong>📐 Change Scale</strong></div>
+              <div class="card-body">
+                <div class="mb-2">
+                  <select class="form-select form-select-sm" value=${scaleMode}
+                          onchange=${(e) => setScaleMode(e.target.value)}>
+                    <option value="res">Resolution w:h</option>
+                    <option value="asrth">Aspect ratio (set height)</option>
+                    <option value="asrtw">Aspect ratio (set width)</option>
+                    <option value="factor">Factor (/n or *n)</option>
+                  </select>
+                </div>
+                <div class="input-group">
+                  <input type="text" class="form-control" placeholder=${scaleMode === 'res' ? '1280:720' : '480'}
+                         value=${scaleValue} oninput=${(e) => setScaleValue(e.target.value)} />
+                  <button class="btn btn-outline-primary" onclick=${doScale}
+                          disabled=${busy || !scaleValue.trim()}>Scale</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Speed -->
+          <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+              <div class="card-header bg-light"><strong>🕓 Speed</strong></div>
+              <div class="card-body">
+                <div class="input-group">
+                  <span class="input-group-text">Multiplier</span>
+                  <input type="text" class="form-control" style="max-width:5rem;" value=${speedMul}
+                         oninput=${(e) => setSpeedMul(e.target.value)} />
+                  <button class="btn btn-outline-primary" onclick=${doSpeed}
+                          disabled=${busy || !speedMul.trim()}>Apply</button>
+                </div>
+                <small class="text-muted">0.5 = 2× faster, 2 = 2× slower (PTS multiplier)</small>
+              </div>
+            </div>
+          </div>
+
+          <!-- Framerate -->
+          <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+              <div class="card-header bg-light"><strong>🎞️ Framerate</strong></div>
+              <div class="card-body">
+                <div class="input-group">
+                  <span class="input-group-text">Change to</span>
+                  <input type="text" class="form-control" style="max-width:5rem;" value=${fpsValue}
+                         oninput=${(e) => setFpsValue(e.target.value)} />
+                  <span class="input-group-text">fps</span>
+                  <button class="btn btn-outline-primary" onclick=${doFramerate}
+                          disabled=${busy || !fpsValue.trim()}>Apply</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Output -->
+        <div class="card shadow-sm mb-4">
+          <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <strong>Output</strong>
+            ${output ? html`<button class="btn btn-sm btn-outline-secondary" onclick=${() => setOutput('')}>Clear</button>` : ''}
+          </div>
+          <div class="card-body p-0">
+            ${output
+              ? html`<pre class="bg-dark text-light p-3 m-0 rounded-bottom"
+                          style="max-height:300px;overflow:auto;white-space:pre-wrap;font-size:0.85rem;">${output}</pre>`
+              : html`<p class="text-muted p-3 m-0">Output will appear here after running an operation.</p>`
+            }
+          </div>
+        </div>
+      ` : html`
+        <!-- Version info shown when no file selected -->
+        <div class="card shadow-sm">
+          <div class="card-header bg-light"><strong>FFmpeg Version</strong></div>
+          <div class="card-body p-0">
+            <pre class="m-0 p-3" style="max-height:300px;overflow:auto;font-size:0.85rem;background:#f8f9fa;">${versionInfo || 'Detecting…'}</pre>
+          </div>
+        </div>
+      `}
     </div>
   `;
 }
@@ -1337,6 +1639,270 @@ function ApiKeysScreen() {
   `;
 }
 
+function OllamaScreen() {
+  const [baseUrl, setBaseUrl] = useState('http://localhost:11434/api');
+  const [models, setModels] = useState([]);
+  const [selectedModel, setSelectedModel] = useState('');
+  const [systemPromptType, setSystemPromptType] = useState('text'); // 'text' or 'file'
+  const [systemPrompt, setSystemPrompt] = useState('');
+  const [systemFilePath, setSystemFilePath] = useState('');
+  const [messages, setMessages] = useState([]);
+  const [userInput, setUserInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [fetchingModels, setFetchingModels] = useState(false);
+  const [error, setError] = useState(null);
+
+  // Fetch models on mount and when baseUrl changes
+  useEffect(() => {
+    loadModels();
+  }, [baseUrl]);
+
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    const chatWin = document.getElementById('chat-window');
+    if (chatWin) {
+      chatWin.scrollTop = chatWin.scrollHeight;
+    }
+  }, [messages, loading]);
+
+  async function loadModels() {
+    try {
+      setFetchingModels(true);
+      setError(null);
+      const tauriHttp = window.__TAURI__?.http;
+      const fetchFn = tauriHttp ? tauriHttp.fetch : window.fetch;
+      
+      const response = await fetchFn(`${baseUrl}/tags`, { 
+        method: 'GET',
+        connectTimeout: 5000
+      });
+      
+      let data;
+      if (tauriHttp) {
+        data = response.data;
+      } else {
+        data = await response.json();
+      }
+
+      if (data && data.models) {
+        const modelNames = data.models.map(m => m.name);
+        setModels(modelNames);
+        if (modelNames.length > 0 && (!selectedModel || !modelNames.includes(selectedModel))) {
+          setSelectedModel(modelNames[0]);
+        }
+      } else {
+        setModels([]);
+      }
+    } catch (err) {
+      setError(`Failed to connect to Ollama at ${baseUrl}: ${err.message}`);
+      setModels([]);
+    } finally {
+      setFetchingModels(false);
+    }
+  }
+
+  async function pickSystemFile() {
+    try {
+      const { open } = window.__TAURI__.dialog || {};
+      const { readTextFile } = window.__TAURI__.fs || {};
+      if (!open || !readTextFile) throw new Error("Tauri dialog/fs not available");
+      
+      const selected = await open({
+        multiple: false,
+        filters: [{ name: 'Markdown', extensions: ['md', 'txt'] }]
+      });
+      if (selected) {
+        setSystemFilePath(selected);
+        const content = await readTextFile(selected);
+        setSystemPrompt(content);
+        setSystemPromptType('file');
+      }
+    } catch (err) {
+      setError(`Error reading file: ${err.message}`);
+    }
+  }
+
+  async function sendMessage() {
+    if (!userInput.trim() || !selectedModel) return;
+
+    setLoading(true);
+    setError(null);
+
+    const userMsg = { role: 'user', content: userInput };
+    const updatedMessages = [...messages, userMsg];
+    setMessages(updatedMessages);
+    setUserInput('');
+
+    try {
+      const tauriHttp = window.__TAURI__?.http;
+      const fetchFn = tauriHttp ? tauriHttp.fetch : window.fetch;
+      
+      const payloadMessages = [];
+      if (systemPrompt.trim()) {
+        payloadMessages.push({ role: 'system', content: systemPrompt });
+      }
+      payloadMessages.push(...updatedMessages);
+
+      let data;
+      if (tauriHttp) {
+        const tauriResponse = await fetchFn(`${baseUrl}/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: {
+            model: selectedModel,
+            messages: payloadMessages,
+            stream: false
+          }
+        });
+        data = tauriResponse.data;
+      } else {
+        const response = await fetch(`${baseUrl}/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: selectedModel,
+            messages: payloadMessages,
+            stream: false
+          })
+        });
+        data = await response.json();
+      }
+
+      if (data && data.message) {
+        setMessages(prev => [...prev, data.message]);
+      } else {
+        throw new Error("Unexpected response format from Ollama");
+      }
+    } catch (err) {
+      setError(`Error sending message: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function clearChat() {
+    setMessages([]);
+    setError(null);
+  }
+
+  return html`
+    <div class="mt-5">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Ollama Chat</h1>
+        <div class="btn-group shadow-sm">
+          <button class="btn ${baseUrl.includes('localhost') ? 'btn-primary' : 'btn-outline-primary'}" 
+                  onclick=${() => setBaseUrl('http://localhost:11434/api')}>Localhost</button>
+          <button class="btn ${baseUrl.includes('ollama.com') ? 'btn-primary' : 'btn-outline-primary'}" 
+                  onclick=${() => setBaseUrl('https://ollama.com/api')}>Ollama.com</button>
+        </div>
+      </div>
+
+      <div class="card shadow-sm mb-4 border-0" style="background: rgba(255,255,255,0.7); backdrop-filter: blur(10px);">
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Model Selection</label>
+              <div class="input-group">
+                <select class="form-select" value=${selectedModel} 
+                        onchange=${(e) => setSelectedModel(e.target.value)}
+                        disabled=${fetchingModels || models.length === 0}>
+                  ${models.length === 0 ? html`<option>No models found</option>` : 
+                    models.map(m => html`<option value=${m} selected=${m === selectedModel}>${m}</option>`)
+                  }
+                </select>
+                <button class="btn btn-outline-secondary" onclick=${loadModels} disabled=${fetchingModels}>
+                  ${fetchingModels ? html`<span class="spinner-border spinner-border-sm"></span>` : '🔄'}
+                </button>
+              </div>
+            </div>
+            
+            <div class="col-md-6">
+              <label class="form-label fw-bold">System Prompt Source</label>
+              <div class="d-flex gap-2">
+                <button class="btn flex-grow-1 ${systemPromptType === 'text' ? 'btn-dark' : 'btn-outline-dark'}" 
+                        onclick=${() => setSystemPromptType('text')}>Text</button>
+                <button class="btn flex-grow-1 ${systemPromptType === 'file' ? 'btn-dark' : 'btn-outline-dark'}" 
+                        onclick=${pickSystemFile}>MD File</button>
+              </div>
+              ${systemFilePath && systemPromptType === 'file' ? html`
+                <div class="mt-1 small text-muted text-truncate" title=${systemFilePath}>
+                  <i class="bi bi-file-earmark-text"></i> ${systemFilePath.split(/[\\/]/).pop()}
+                </div>
+              ` : ''}
+            </div>
+
+            <div class="col-12">
+              <label class="form-label fw-bold">System Prompt</label>
+              <textarea class="form-control" rows="2" 
+                        style="background: rgba(255,255,255,0.5);"
+                        value=${systemPrompt} 
+                        oninput=${(e) => { setSystemPrompt(e.target.value); setSystemPromptType('text'); }}
+                        placeholder="You are a helpful assistant..."></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm mb-4 border-0" style="height: 500px; display: flex; flex-direction: column; background: rgba(255,255,255,0.5); backdrop-filter: blur(10px);">
+        <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center py-3">
+          <h5 class="mb-0">Conversation Context</h5>
+          <button class="btn btn-sm btn-outline-danger rounded-pill px-3" onclick=${clearChat}>Clear History</button>
+        </div>
+        <div class="card-body overflow-auto p-4" id="chat-window" style="flex-grow: 1;">
+          ${messages.length === 0 ? html`
+            <div class="h-100 d-flex flex-column justify-content-center align-items-center text-muted opacity-50">
+              <span style="font-size: 5rem;">🦙</span>
+              <p class="fs-5">Ready to chat with ${selectedModel || 'Ollama'}</p>
+            </div>
+          ` : messages.map((msg, i) => html`
+            <div class="mb-4 d-flex ${msg.role === 'user' ? 'justify-content-end' : 'justify-content-start'}">
+              <div class="p-3 shadow-sm" 
+                   style="max-width: 85%; 
+                          background: ${msg.role === 'user' ? 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)' : '#ffffff'}; 
+                          color: ${msg.role === 'user' ? 'white' : '#1f2937'};
+                          border-radius: 20px;
+                          border-bottom-${msg.role === 'user' ? 'right' : 'left'}-radius: 4px;">
+                <div class="small fw-bold mb-1 opacity-75">${msg.role === 'user' ? 'You' : (selectedModel || 'Ollama')}</div>
+                <div style="white-space: pre-wrap; line-height: 1.5;">${msg.content}</div>
+              </div>
+            </div>
+          `)}
+          ${loading ? html`
+            <div class="mb-4 d-flex justify-content-start">
+              <div class="p-3 bg-white shadow-sm" style="max-width: 80%; border-radius: 20px; border-bottom-left-radius: 4px;">
+                <div class="d-flex gap-1">
+                  <div class="spinner-grow spinner-grow-sm text-primary" style="animation-delay: 0s" role="status"></div>
+                  <div class="spinner-grow spinner-grow-sm text-primary" style="animation-delay: 0.2s" role="status"></div>
+                  <div class="spinner-grow spinner-grow-sm text-primary" style="animation-delay: 0.4s" role="status"></div>
+                </div>
+              </div>
+            </div>
+          ` : ''}
+        </div>
+        <div class="card-footer bg-transparent border-0 p-4">
+          <div class="input-group shadow-sm" style="border-radius: 25px; overflow: hidden; background: white;">
+            <textarea class="form-control border-0 px-4 py-3" placeholder="Ask anything..." 
+                      rows="1"
+                      style="resize: none; box-shadow: none;"
+                      value=${userInput}
+                      oninput=${(e) => setUserInput(e.target.value)}
+                      onkeydown=${(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
+            ></textarea>
+            <button class="btn btn-primary px-4 border-0" 
+                    style="background: #4f46e5;"
+                    onclick=${sendMessage} 
+                    disabled=${loading || !userInput.trim() || !selectedModel}>
+              <span class="d-none d-sm-inline">Send</span>
+              <span class="d-inline d-sm-none">▶</span>
+            </button>
+          </div>
+          ${error ? html`<div class="mt-3 alert alert-danger py-2 px-3 border-0 rounded-3 small">⚠️ ${error}</div>` : ''}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 function LLMScreen({ provider: initialProvider }) {
   const [provider, setProvider] = useState(initialProvider || 'ollama');
   const [endpoint, setEndpoint] = useState('');
@@ -1556,7 +2122,7 @@ function App() {
     dirwatcher: () => html`<${DirectoryWatcherScreen} />`,
     http: () => html`<${HttpScreen} />`,
     git: () => html`<${GitScreen} />`,
-    ollama: () => html`<${LLMScreen} provider="ollama" />`,
+    ollama: () => html`<${OllamaScreen} />`,
     lmstudio: () => html`<${LLMScreen} provider="lmstudio" />`,
     'api-keys': () => html`<${ApiKeysScreen} />`,
     'not-found': () => html`
