@@ -21,29 +21,20 @@ const Database = window.__TAURI__.sql
 
 let openedFile
 
-const targetEl = 'image'
-
-let history = []
+//const targetEl = 'image'
+//let history = []
 
 let store
 
-let imgWidth
-
-let imgHeight
-
-let xnwext = ''
-
-let xoper = []
-
-let xpixels = ''
-
+//let imgWidth
+//let imgHeight
+//let xnwext = ''
+//let xoper = []
+//let xpixels = ''
 //let xcmd = ''
-
-let xsuffix = ''
-
-let xcombine = false
-
-let scale = 1
+//let xsuffix = ''
+//let xcombine = false
+//let scale = 1
 
 
 async function shellCmd(xrr = []) {
@@ -69,7 +60,7 @@ async function shellCmd(xrr = []) {
   }
 }
 
-async function addSuffix(sfx = '') {
+/* async function addSuffix(sfx = '') {
 
   if (openedFile) {
 
@@ -78,21 +69,21 @@ async function addSuffix(sfx = '') {
     return openedFile.replace(`.${sfext}`, `_${sfx}.${sfext}`)
   }
 
-}
+} */
 
-async function changeExt(nwex = '') {
+/* async function changeExt(nwex = '') {
 
   const sfext = await extname(openedFile)
 
   return openedFile.replace(`.${sfext}`, `.${nwex}`)
-}
+} */
 
 async function errorMessage(err = '') {
 
   await message(err, { title: 'Oops...', kind: 'error' });
 }
 
-async function updateRecentMenu() {
+/* async function updateRecentMenu() {
 
   const recentMenu = await menu.get('recent')
 
@@ -107,7 +98,7 @@ async function updateRecentMenu() {
 
   })
 
-}
+} */
 
 /* async function storeFileName(fname){
   //const store = await load('store.json', { autoSave: false });
@@ -119,7 +110,7 @@ async function updateRecentMenu() {
   return await store.get('lastfile')
 } */
 
-function showHistory() {
+/* function showHistory() {
 
   document.getElementById(targetEl).innerHTML = history.map((row, indx) => {
     return `<p><a id="hlnk-${indx}" href="#" class="history-item" data-filename="${row}">${row}</a></p>`
@@ -149,10 +140,10 @@ function showHistory() {
     })
 
   })
-}
+} */
 
 
-async function loadImage(fname) {
+/* async function loadImage(fname) {
 
   //console.log(`Md file opening requested: ${fname}`)
 
@@ -254,7 +245,7 @@ async function loadImage(fname) {
 
 
 
-}
+} */
 
 async function openImage() {
 
@@ -356,27 +347,7 @@ window.addEventListener("DOMContentLoaded", () => {
       const viewMenu = await Submenu.new({
         text: 'Router',
         items: [
-          await MenuItem.new({
-            id: 'home',
-            text: 'Home',
-            action: async () => {
-              window.dispatchEvent(new CustomEvent('tauri-menu-command', { detail: 'navigate-home' }));
-            },
-          }),
-          await MenuItem.new({
-            id: 'about',
-            text: 'About',
-            action: async () => {
-              window.dispatchEvent(new CustomEvent('tauri-menu-command', { detail: 'navigate-about' }));
-            },
-          }),
-          await MenuItem.new({
-            id: 'settings',
-            text: 'Settings',
-            action: async () => {
-              window.dispatchEvent(new CustomEvent('tauri-menu-command', { detail: 'navigate-settings' }));
-            },
-          }),
+          
           await MenuItem.new({
             id: 'database',
             text: 'Database',
@@ -384,63 +355,18 @@ window.addEventListener("DOMContentLoaded", () => {
               window.dispatchEvent(new CustomEvent('tauri-menu-command', { detail: 'navigate-database' }));
             },
           }),
+          
           await PredefinedMenuItem.new({
             text: 'separator-text',
             item: 'Separator',
           }),
+          
           await MenuItem.new({
-            id: 'ffmpeg',
-            text: 'FFMPEG',
+            id: 'openrouter',
+            text: 'Open Router',
             action: async () => {
-              window.dispatchEvent(new CustomEvent('tauri-menu-command', { detail: 'navigate-ffmpeg' }));
+              window.dispatchEvent(new CustomEvent('tauri-menu-command', { detail: 'navigate-openrouter' }));
             },
-          }),
-          await MenuItem.new({
-            id: 'git',
-            text: 'Git',
-            action: async () => {
-              window.dispatchEvent(new CustomEvent('tauri-menu-command', { detail: 'navigate-git' }));
-            },
-          }),
-          await PredefinedMenuItem.new({
-            text: 'separator-text',
-            item: 'Separator',
-          }),
-          await MenuItem.new({
-            id: 'textfile',
-            text: 'Text File',
-            action: async () => {
-              window.dispatchEvent(new CustomEvent('tauri-menu-command', { detail: 'navigate-textfile' }));
-            },
-          }),
-          await MenuItem.new({
-            id: 'ejs',
-            text: 'EJS',
-            action: async () => {
-              window.dispatchEvent(new CustomEvent('tauri-menu-command', { detail: 'navigate-ejs' }));
-            },
-          }),
-          await MenuItem.new({
-            id: 'dirwatcher',
-            text: 'Dir Watcher',
-            action: async () => {
-              window.dispatchEvent(new CustomEvent('tauri-menu-command', { detail: 'navigate-dirwatcher' }));
-            },
-          }),
-          await PredefinedMenuItem.new({
-            text: 'separator-text',
-            item: 'Separator',
-          }),
-          await MenuItem.new({
-            id: 'http',
-            text: 'HTTP Server',
-            action: async () => {
-              window.dispatchEvent(new CustomEvent('tauri-menu-command', { detail: 'navigate-http' }));
-            },
-          }),
-          await PredefinedMenuItem.new({
-            text: 'separator-text',
-            item: 'Separator',
           }),
           await MenuItem.new({
             id: 'ollama',
@@ -471,28 +397,7 @@ window.addEventListener("DOMContentLoaded", () => {
       })
 
 
-      /* const check_sub_item_combine_on = await CheckMenuItem.new({
-              id: 'combineon',
-              text: 'Combine: ON',
-              checked: xcombine,
-              action: () => {
-
-                xcombine = true
-                check_sub_item_combine_off.setChecked(!xcombine)
-              },
-          })
-
-      const check_sub_item_combine_off = await CheckMenuItem.new({
-              id: 'combineoff',
-              text: 'Combine: OFF',
-              checked: !xcombine,
-              action: () => {
-
-                xcombine = false
-                check_sub_item_combine_on.setChecked(xcombine)
-              },
-          }) */
-
+     
       /* const actionMenu = await Submenu.new({
         text: 'Action',
         items: [
@@ -593,252 +498,9 @@ window.addEventListener("DOMContentLoaded", () => {
         ]
       }) */
 
-      /* const resizeMenu = await Submenu.new({
-        text: 'Resize',
-        items: [
-          await MenuItem.new({
-              id: '800x800',
-              text: '800x800',
-              action: async () => {
+      
 
-                if(openedFile){
-
-                  if(!xcombine){
-
-                    const outsfx = await addSuffix('800x800')
-                    shellCmd([openedFile,'-resize','800x800',outsfx])
-                  }
-                  else{
-
-                    
-                  }
-                }
-              },
-          }),
-          
-        ]
-      }) */
-
-      /* const rotateMenu = await Submenu.new({
-        text: 'Rotate',
-        items: [
-          await MenuItem.new({
-            id: 'p90',
-            text: '+90°',
-            action: async () => {
-
-              if(openedFile){
-
-                if(!xcombine){
-
-                  const outsfx = await addSuffix('rp90')
-                  shellCmd(['convert','-rotate','90',openedFile, outsfx])
-                }
-                else{
-
-                  
-                }
-              }
-            },
-          }),
-          await MenuItem.new({
-            id: 'p180',
-            text: '+180°',
-            action: async () => {
-
-              if(openedFile){
-
-                if(!xcombine){
-
-                  const outsfx = await addSuffix('rp180')
-                  shellCmd(['convert','-rotate','180',openedFile, outsfx])
-                }
-                else{
-
-                  
-                }
-              }
-            },
-          }),
-          
-          
-        ]
-      }) */
-
-      /* const exportMenu = await Submenu.new({
-        text: 'Export',
-        items: [
-          await MenuItem.new({
-            id: 'topng',
-            text: 'to PNG',
-            action: async () => {
-
-              if(openedFile){
-
-                if(!xcombine){
-
-                  const outx = await changeExt('png')
-                  shellCmd([openedFile, outx])
-                }
-                else{
-
-                  xnwext = 'png'
-                }
-              }
-            },
-          }),
-          await MenuItem.new({
-            id: 'topngwhtrp',
-            text: 'to PNG White Transparent Fz5%',
-            action: async () => {
-
-              if(openedFile){
-
-                if(!xcombine){
-
-                  const outx = await changeExt('png')
-                  shellCmd([openedFile, '-fuzz','5%','-transparent','white', outx])
-                }
-                else{
-
-                  xnwext = 'png'
-                  xoper.push(...['-fuzz','5%','-transparent','white'])
-                }
-              }
-            },
-          }),
-          await MenuItem.new({
-            id: 'tojpg',
-            text: 'to JPG',
-            action: async () => {
-
-              if(openedFile){
-
-                if(!xcombine){
-
-                  const outx = await changeExt('jpg')
-                  shellCmd([openedFile, outx])
-                }
-                else{
-
-                  xnwext = 'jpg'
-                }
-              }
-            },
-          }),
-          
-         
-        ]
-      }) */
-
-      /* const effectsMenu = await Submenu.new({
-        text: 'Effects',
-        items: [
-          await MenuItem.new({
-            id: 'wtr1',
-            text: 'White transparent 1% fuzz',
-            action: async () => {
-
-              if(openedFile){
-
-                if(!xcombine){
-
-                  const outx = await addSuffix('_whtrsp')
-                  shellCmd([openedFile, '-fuzz','1%','-transparent','white', outx])
-                }
-                else{
-
-                  xoper.push(...['-fuzz','1%','-transparent','white'])
-                  
-                }
-              }
-            },
-          }),
-          await MenuItem.new({
-            id: 'wtr5',
-            text: 'White transparent 5% fuzz',
-            action: async () => {
-
-              if(openedFile){
-
-                if(!xcombine){
-
-                  const outx = await addSuffix('_whtrsp')
-                  shellCmd([openedFile, '-fuzz','5%','-transparent','white', outx])
-                }
-                else{
-
-                  xoper.push(...['-fuzz','5%','-transparent','white'])
-                  
-                }
-              }
-            },
-          }),
-          await MenuItem.new({
-            id: 'wtr10',
-            text: 'White transparent 10% fuzz',
-            action: async () => {
-
-              if(openedFile){
-
-                if(!xcombine){
-
-                  const outx = await addSuffix('_whtrsp')
-                  shellCmd([openedFile, '-fuzz','10%','-transparent','white', outx])
-                }
-                else{
-
-                  xoper.push(...['-fuzz','10%','-transparent','white'])
-                  
-                }
-              }
-            },
-          }),
-          await MenuItem.new({
-            id: 'grayscale',
-            text: 'Grayscale',
-            action: async () => {
-
-              if(openedFile){
-
-                if(!xcombine){
-
-                  const outx = await addSuffix('_grayscale')
-                  shellCmd([openedFile, '-colorspace','Gray', outx])
-                }
-                else{
-
-                  xoper.push(...['-colorspace','Gray'])
-                  
-                }
-              }
-            },
-          }),
-          await MenuItem.new({
-            id: 'flip',
-            text: 'Flip', // vertical flip
-            action: async () => {
-
-              if(openedFile){
-
-                if(!xcombine){
-
-                  const outx = await addSuffix('_flipped')
-                  shellCmd([openedFile, '-flip', outx])
-                }
-                else{
-
-                  xoper.push('-flip')
-                  
-                }
-              }
-            },
-          }),
-          
-          
-        ]
-      }) */
-
+      
       const helpMenu = await Submenu.new({
         text: 'Help',
         items: [
@@ -870,7 +532,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
               const appVersion = await getVersion();
 
-              await message(`Tauri Multipurpose App v${appVersion}\nCreated by Amir Hachaichi\ngithub.com/amirlogic/tauri-preact-boilerplate`,
+              await message(`Tauri LLM APIs v${appVersion}\nCreated by Amir Hachaichi\ngithub.com/amirlogic/tauri-api-tool`,
                 { title: 'About', kind: 'info' });
             },
           }),
@@ -966,61 +628,7 @@ window.addEventListener("DOMContentLoaded", () => {
       errorMessage(err)
     }
 
-    // OpenWith DEV
-    let devmode = "none"
-
-    if (devmode == "plugin") {
-
-      const urls = await getCurrent()
-
-      if (urls) {
-
-        console.log(`getCurrent: ${urls}`)
-
-        //await message(`getCurrent: ${urls}`, { title: 'deep-link', kind: 'info' });
-
-        document.getElementById(targetEl).innerText = `getCurrent: ${urls}`
-      }
-
-    }
-    else if (devmode == "listen") {
-
-      const getevent = await getCurrentWindow().listen('deep-link', (event) => {
-
-        console.log(`getCurrentWindow().listen: ${event.payload}`);
-
-        document.getElementById(targetEl).innerText = `getCurrentWindow().listen: ${event.payload}`
-      });
-
-      /* const getevent = await getCurrentWindow().listen('open-file', (event) => {
-        console.log(`getCurrentWindow().listen: ${event.payload}`);
-        document.getElementById(targetEl).innerText = `getCurrentWindow().listen: ${event.payload}`
-      }); */
-
-    }
-    else if (devmode == "cli") {
-
-      if (matches.subcommand?.name === 'run') {
-
-        // `./your-app run $ARGS` was executed
-        const args = matches.subcommand.matches.args;
-
-        if (args.debug?.value === true) {
-          // `./your-app run --debug` was executed
-          document.getElementById(targetEl).innerText = `cli: debug`
-        }
-
-        if (args.release?.value === true) {
-          // `./your-app run --release` was executed
-        }
-
-      }
-
-    }
-    else {
-
-      console.log("No DevMode specified")
-    }
+    
 
   })();
 
