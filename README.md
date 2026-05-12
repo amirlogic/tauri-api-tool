@@ -1,4 +1,4 @@
-# Tauri Multipurpose App
+# Tauri API Tool
 
 Many functions that demonstrates Tauri capabilities:
 

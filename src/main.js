@@ -83,65 +83,6 @@ async function errorMessage(err = '') {
   await message(err, { title: 'Oops...', kind: 'error' });
 }
 
-/* async function updateRecentMenu() {
-
-  const recentMenu = await menu.get('recent')
-
-  history.forEach(async (hitem, indx) => {
-
-    const recentItem = await recentMenu.get(`r${indx}`)
-
-    if (recentItem) {
-
-      await recentItem.setText(hitem)
-    }
-
-  })
-
-} */
-
-/* async function storeFileName(fname){
-  //const store = await load('store.json', { autoSave: false });
-  await store.set('lastfile', fname);
-  await store.save();
-} */
-/* async function getStoreData(){
-  //const store = await load('store.json', { autoSave: false });
-  return await store.get('lastfile')
-} */
-
-/* function showHistory() {
-
-  document.getElementById(targetEl).innerHTML = history.map((row, indx) => {
-    return `<p><a id="hlnk-${indx}" href="#" class="history-item" data-filename="${row}">${row}</a></p>`
-  }).join('')
-
-  let hitems = document.querySelectorAll('.history-item')
-
-  hitems.forEach((item) => {
-
-    item.addEventListener('click', (e) => {
-
-      e.preventDefault();
-
-      try {
-
-        const el = e.currentTarget
-
-        loadImage(el.dataset.filename)
-
-
-      }
-      catch (err) {
-
-        errorMessage(err)
-      }
-
-    })
-
-  })
-} */
-
 
 /* async function loadImage(fname) {
 
@@ -247,7 +188,7 @@ async function errorMessage(err = '') {
 
 } */
 
-async function openImage() {
+/* async function openImage() {
 
   try {
 
@@ -268,7 +209,7 @@ async function openImage() {
     errorMessage(err)
 
   }
-}
+} */
 
 let menu
 
@@ -397,109 +338,6 @@ window.addEventListener("DOMContentLoaded", () => {
       })
 
 
-     
-      /* const actionMenu = await Submenu.new({
-        text: 'Action',
-        items: [
-          check_sub_item_combine_on,
-          check_sub_item_combine_off,
-          await PredefinedMenuItem.new({
-            text: 'separator-text',
-            item: 'Separator',
-          }),
-          await MenuItem.new({
-              id: 'exec',
-              text: 'Execute',
-              action: async () => {
-
-
-                let xconf = await confirm(`Export with these changes?\n\nFormat: ${xnwext}\nSize: ${xpixels}\nExtra: ${xoper.join(' ')}\n${xcombine ? '' : "\nCombine is Off!"}\n`, 
-                                          { title: 'Confirm execution', kind: 'warning' })
-
-                if(xconf && xcombine){
-
-                  let xrr = [openedFile]
-
-                  let sfx = ''
-
-                  try {
-                    
-                    // resize
-                    if(xpixels){
-
-                      xrr.push(...['-resize',xpixels])
-
-                      sfx += `_${xpixels}`
-                    }
-
-                    if(xoper){
-
-                        xrr.push(...xoper)
-
-                        sfx += `_m`
-                    }
-                   
-                    // output file
-                    if(xnwext && sfx){
-
-                      const sfext = await extname(openedFile)
-
-                      const outx = openedFile.replace(`.${sfext}`,`_${sfx}.${xnwext}`)
-
-                      xrr.push(outx)
-                      
-                    }
-                    else if(sfx){
-
-                      const outx = await addSuffix(sfx)
-
-                      xrr.push(outx)
-
-                    }
-                    else if(xnwext){
-
-                      const outx = await changeExt(xnwext)
-
-                      xrr.push(outx)
-                    }
-
-                    if(xrr.length > 1){
-                      
-                      shellCmd(xrr)
-                    }
-                    
-                    //await message(cmdres?.stdout, { title: 'ImageMagick', kind: 'info' });
-
-                  } catch (xerror) {
-                    
-                    errorMessage(xerror)
-                  }
-                }
-
-              },
-          }),
-          await MenuItem.new({
-              id: 'reset',
-              text: 'Reset',
-              action: async () => {
-
-                xnwext = ''
-
-                xoper = []
-
-                xpixels = ''
-
-                //xcmd = ''
-
-                xsuffix = ''
-
-              },
-          }),
-        ]
-      }) */
-
-      
-
       
       const helpMenu = await Submenu.new({
         text: 'Help',
@@ -539,24 +377,6 @@ window.addEventListener("DOMContentLoaded", () => {
         ]
       })
 
-      /* let recent_menu = {
-            id: 'recent',
-            text: 'Recent',
-            items:[
-
-              {id: 'r0',text:'-', action:()=>{ loadImage(history[0]) }},
-              {id: 'r1',text:'-', action:()=>{ loadImage(history[1]) }},
-              {id: 'r2',text:'-', action:()=>{ loadImage(history[2]) }},
-              {id: 'r3',text:'-', action:()=>{ loadImage(history[3]) }},
-              {id: 'r4',text:'-', action:()=>{ loadImage(history[4]) }},
-              {id: 'r5',text:'-', action:()=>{ loadImage(history[5]) }},
-              {id: 'r6',text:'-', action:()=>{ loadImage(history[6]) }},
-              {id: 'r7',text:'-', action:()=>{ loadImage(history[7]) }},
-              {id: 'r8',text:'-', action:()=>{ loadImage(history[8]) }},
-              {id: 'r9',text:'-', action:()=>{ loadImage(history[9]) }}
-            ]
-            
-          } */
 
       menu = await Menu.new({
         items: [
