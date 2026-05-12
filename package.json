@@ -1,5 +1,5 @@
 {
-  "name": "tauri2",
+  "name": "tauri-api-tool",
   "private": true,
   "version": "0.1.0",
   "type": "module",

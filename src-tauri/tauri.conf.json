@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Tauri Multifunction",
-  "version": "0.1.7",
-  "identifier": "com.taurimf.app",
+  "productName": "Tauri API Tool",
+  "version": "0.1.0",
+  "identifier": "com.tauriapi.app",
   "build": {
     "frontendDist": "../src"
   },
@@ -10,7 +10,7 @@
     "withGlobalTauri": true,
     "windows": [
       {
-        "title": "Tauri Multifunction App",
+        "title": "Tauri API Tool",
         "width": 1024,
         "height": 768
       }
