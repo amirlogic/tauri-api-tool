@@ -116,28 +116,28 @@ export default function ModelsScreen() {
 
       <div class="card shadow-sm mb-4">
         <div class="card-header bg-light">
-          <strong>\${editingId !== null ? '✏️ Edit Model' : '➕ Add Model'}</strong>
+          <strong>${editingId !== null ? '✏️ Edit Model' : '➕ Add Model'}</strong>
         </div>
         <div class="card-body">
           <div class="row g-3">
             <div class="col-md-6">
               <label class="form-label">Model Name</label>
               <input type="text" class="form-control" name="model_name" placeholder="e.g. gpt-4"
-                     value=\${form.model_name} oninput=\${handleInput} />
+                     value=${form.model_name} oninput=${handleInput} />
             </div>
             <div class="col-md-6">
               <label class="form-label">Provider</label>
               <input type="text" class="form-control" name="provider" placeholder="e.g. openai"
-                     value=\${form.provider} oninput=\${handleInput} />
+                     value=${form.provider} oninput=${handleInput} />
             </div>
             <div class="col-12 d-flex gap-2">
-              <button class="btn btn-primary" onclick=\${handleSubmit}
-                      disabled=\${!form.model_name.trim() || !form.provider.trim()}>
-                \${editingId !== null ? 'Update' : 'Save'}
+              <button class="btn btn-primary" onclick=${handleSubmit}
+                      disabled=${!form.model_name.trim() || !form.provider.trim()}>
+                ${editingId !== null ? 'Update' : 'Save'}
               </button>
-              \${editingId !== null ? html\`
-                <button class="btn btn-outline-secondary" onclick=\${cancelEdit}>Cancel</button>
-              \` : ''}
+              ${editingId !== null ? html`
+                <button class="btn btn-outline-secondary" onclick=${cancelEdit}>Cancel</button>
+              ` : ''}
             </div>
           </div>
         </div>
@@ -145,11 +145,11 @@ export default function ModelsScreen() {
 
       <div class="card shadow-sm">
         <div class="card-header bg-light">
-          <strong>Stored Models (\${models.length})</strong>
+          <strong>Stored Models (${models.length})</strong>
         </div>
-        \${models.length === 0
-          ? html\`<div class="card-body"><p class="text-muted mb-0">No models stored yet.</p></div>\`
-          : html\`
+        ${models.length === 0
+          ? html`<div class="card-body"><p class="text-muted mb-0">No models stored yet.</p></div>`
+          : html`
             <div class="table-responsive">
               <table class="table table-hover mb-0">
                 <thead class="table-light">
@@ -161,25 +161,25 @@ export default function ModelsScreen() {
                   </tr>
                 </thead>
                 <tbody>
-                  \${models.map(row => html\`
-                    <tr key=\${row.id} class=\${editingId === row.id ? 'table-active' : ''}>
-                      <td>\${row.model_name}</td>
-                      <td><span class="badge bg-secondary">\${row.provider}</span></td>
-                      <td><small class="text-muted">\${row.created_at}</small></td>
+                  ${models.map(row => html`
+                    <tr key=${row.id} class=${editingId === row.id ? 'table-active' : ''}>
+                      <td>${row.model_name}</td>
+                      <td><span class="badge bg-secondary">${row.provider}</span></td>
+                      <td><small class="text-muted">${row.created_at}</small></td>
                       <td class="text-end">
                         <div class="btn-group btn-group-sm">
-                          <button class="btn btn-outline-primary" onclick=\${() => startEdit(row)}>Edit</button>
-                          <button class="btn btn-outline-danger" onclick=\${() => deleteModel(row.id)}>Delete</button>
+                          <button class="btn btn-outline-primary" onclick=${() => startEdit(row)}>Edit</button>
+                          <button class="btn btn-outline-danger" onclick=${() => deleteModel(row.id)}>Delete</button>
                         </div>
                       </td>
                     </tr>
-                  \`)}
+                  `)}
                 </tbody>
               </table>
             </div>
-          \`
+          `
         }
       </div>
     </div>
-  \`;
+  `;
 }

@@ -26,21 +26,19 @@ export default function OllamaScreen() {
   async function loadModels() {
     try {
       setError(null);
-      const tauriHttp = window.__TAURI__?.http;
-      const fetchFn = tauriHttp ? tauriHttp.fetch : window.fetch;
+      const Database = window.__TAURI__.sql;
+      if (!Database) throw new Error('SQL plugin not available');
+      const conn = await Database.load('sqlite:test.db');
       
-      const response = await fetchFn(`${baseUrl}/tags`);
-      const data = tauriHttp ? response.data : await response.json();
-
-      if (data && data.models) {
-        const modelNames = data.models.map(m => m.name);
-        setModels(modelNames);
-        if (modelNames.length > 0 && !selectedModel) {
-          setSelectedModel(modelNames[0]);
-        }
+      const rows = await conn.select("SELECT * FROM models");
+      const modelNames = rows.map(m => m.model_name);
+      
+      setModels(modelNames);
+      if (modelNames.length > 0 && !selectedModel) {
+        setSelectedModel(modelNames[0]);
       }
     } catch (err) {
-      setError(`Failed to connect to Ollama at ${baseUrl}`);
+      setError(`Failed to load models from database: ${err.message}`);
     }
   }
 
@@ -97,9 +95,11 @@ export default function OllamaScreen() {
 
       <div class="row g-3 mb-4">
         <div class="col-md-6">
-          <label class="form-label fw-bold">Ollama API URL</label>
-          <input type="text" class="form-control" placeholder="http://localhost:11434/api"
-                 value=${baseUrl} oninput=${(e) => setBaseUrl(e.target.value)} />
+          <label class="form-label fw-bold">Ollama API Environment</label>
+          <select class="form-select" value=${baseUrl} onchange=${(e) => setBaseUrl(e.target.value)}>
+            <option value="http://localhost:11434/api">Localhost (http://localhost:11434/api)</option>
+            <option value="https://ollama.com/api">Ollama.com (https://ollama.com/api)</option>
+          </select>
         </div>
         
         <div class="col-md-6">
