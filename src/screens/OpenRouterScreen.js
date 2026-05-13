@@ -3,54 +3,56 @@ const { useState, useEffect } = window.preactHooks;
 const html = window.htm.bind(h);
 
 export default function OpenRouterScreen() {
-  const [apiKey, setApiKey] = useState('');
-  const [model, setModel] = useState('gpt-3.5-turbo');
+  const [model, setModel] = useState('');
   const [models, setModels] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [status, setStatus] = useState(null);
   const [messages, setMessages] = useState([]);
   const [userInput, setUserInput] = useState('');
   const [responseLoading, setResponseLoading] = useState(false);
   const [systemPrompt, setSystemPrompt] = useState('You are a helpful assistant.');
+  const [enableReasoning, setEnableReasoning] = useState(false);
 
-  async function fetchModels() {
-    if (!apiKey.trim()) {
-      setError('Please enter your OpenRouter API key first.');
-      return;
-    }
+  useEffect(() => {
+    loadModels();
+  }, []);
 
-    setLoading(true);
-    setError(null);
-
+  async function loadModels() {
     try {
-      const response = await fetch('https://openrouter.ai/api/v1/models', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'HTTP-Referer': 'tauri-api-tool',
-        },
-      });
-
-      if (!response.ok) throw new Error(`Failed to fetch models: ${response.statusText}`);
+      setLoading(true);
+      setError(null);
+      const Database = window.__TAURI__.sql;
+      if (!Database) throw new Error('SQL plugin not available');
+      const conn = await Database.load('sqlite:test.db');
       
-      const data = await response.json();
-      const modelList = data.data.map(m => m.id).sort();
-      setModels(modelList);
-      if (modelList.length > 0 && !modelList.includes(model)) {
-        setModel(modelList[0]);
+      const rows = await conn.select("SELECT * FROM models");
+      const modelNames = rows.map(m => m.model_name);
+      
+      setModels(modelNames);
+      if (modelNames.length > 0 && !model) {
+        setModel(modelNames[0]);
       }
     } catch (err) {
-      setError(`Error fetching models: ${err.message}`);
+      setError(`Failed to load models from database: ${err.message}`);
     } finally {
       setLoading(false);
     }
   }
 
+  useEffect(() => {
+    const chatWin = document.getElementById('chat-window');
+    if (chatWin) {
+      chatWin.scrollTop = chatWin.scrollHeight;
+    }
+  }, [messages, responseLoading]);
+
   async function sendMessage() {
-    if (!userInput.trim() || !model || !apiKey.trim()) return;
+    if (!userInput.trim() || !model) return;
 
     setResponseLoading(true);
     setError(null);
+    setStatus(null);
 
     const userMsg = { role: 'user', content: userInput };
     const updatedMessages = [...messages, userMsg];
@@ -58,44 +60,73 @@ export default function OpenRouterScreen() {
     setUserInput('');
 
     try {
+      const Database = window.__TAURI__.sql;
+      let dbApiKey = '';
+      if (Database) {
+        const conn = await Database.load('sqlite:test.db');
+        const modelRows = await conn.select("SELECT provider FROM models WHERE model_name = ? LIMIT 1", [model]);
+        if (modelRows && modelRows.length > 0) {
+          const provider = modelRows[0].provider;
+          const keyRows = await conn.select("SELECT api_key FROM apikeys WHERE provider = ? LIMIT 1", [provider]);
+          if (keyRows && keyRows.length > 0) {
+            dbApiKey = keyRows[0].api_key;
+          }
+        }
+      }
+
+      if (!dbApiKey) {
+        throw new Error('API Key not found in database for this model\'s provider.');
+      }
+
+      const payloadMessages = [
+        { role: 'system', content: systemPrompt },
+        ...updatedMessages
+      ];
+
       const payload = {
         model: model,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          ...updatedMessages
-        ],
-        temperature: 0.7,
-        top_p: 1,
-        top_k: 0,
-        repetition_penalty: 1,
-        min_p: 0,
+        messages: payloadMessages,
       };
 
-      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      if (enableReasoning) {
+        payload.reasoning = { enabled: true };
+      }
+
+      const tauriHttp = window.__TAURI__?.http;
+      const fetchFn = tauriHttp ? tauriHttp.fetch : window.fetch;
+
+      const bodyData = (tauriHttp && tauriHttp.Body && tauriHttp.Body.json) 
+          ? tauriHttp.Body.json(payload) 
+          : JSON.stringify(payload);
+
+      const response = await fetchFn('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${apiKey}`,
+          'Authorization': `Bearer ${dbApiKey}`,
           'HTTP-Referer': 'tauri-api-tool',
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(payload),
+        body: bodyData,
       });
 
-      if (!response.ok) {
-        throw new Error(`API Error: ${response.status} ${response.statusText}`);
+      setStatus(response.status);
+
+      if (!response.ok && response.status) {
+        throw new Error(`API Error: ${response.status} ${response.statusText || ''}`);
       }
 
-      const data = await response.json();
+      const data = typeof response.json === 'function' ? await response.json() : response.data;
       
       if (data.choices && data.choices[0] && data.choices[0].message) {
         const assistantMsg = data.choices[0].message;
         setMessages(prev => [...prev, assistantMsg]);
+      } else if (data.error) {
+        throw new Error(data.error.message || JSON.stringify(data.error));
       } else {
         throw new Error('Unexpected API response format');
       }
     } catch (err) {
       setError(`Error: ${err.message}`);
-      // Remove the user message since we failed to get a response
       setMessages(updatedMessages.slice(0, -1));
     } finally {
       setResponseLoading(false);
@@ -105,20 +136,22 @@ export default function OpenRouterScreen() {
   function clearChat() {
     setMessages([]);
     setError(null);
+    setStatus(null);
   }
 
   return html`
     <div class="mt-5">
       <h1>🚀 OpenRouter</h1>
-      <p>Chat with OpenRouter models using your API key.</p>
+      <p>Chat with OpenRouter models using database keys.</p>
 
       <div class="row g-3 mb-4">
-        <div class="col-md-6">
-          <label class="form-label fw-bold">API Key</label>
-          <input type="password" class="form-control" placeholder="sk-or-..."
-                 value=${apiKey} oninput=${(e) => setApiKey(e.target.value)}
-                 disabled=${responseLoading} />
-          <small class="text-muted">Get your key from openrouter.ai</small>
+        <div class="col-md-6 d-flex align-items-center">
+          <div class="form-check form-switch mt-4">
+            <input class="form-check-input" type="checkbox" role="switch" id="reasoningSwitch"
+                   checked=${enableReasoning} onchange=${(e) => setEnableReasoning(e.target.checked)}
+                   disabled=${responseLoading} />
+            <label class="form-check-label fw-bold ms-2" for="reasoningSwitch">Enable Reasoning API</label>
+          </div>
         </div>
         
         <div class="col-md-6">
@@ -128,12 +161,12 @@ export default function OpenRouterScreen() {
                     onchange=${(e) => setModel(e.target.value)}
                     disabled=${responseLoading || models.length === 0}>
               ${models.length === 0 
-                ? html`<option value="gpt-3.5-turbo">gpt-3.5-turbo (default)</option>`
+                ? html`<option value="">No models in DB</option>`
                 : models.map(m => html`<option value=${m} selected=${m === model}>${m}</option>`)
               }
             </select>
-            <button class="btn btn-outline-secondary" onclick=${fetchModels} 
-                    disabled=${loading || !apiKey.trim()}>
+            <button class="btn btn-outline-secondary" onclick=${loadModels} 
+                    disabled=${loading}>
               ${loading ? html`<span class="spinner-border spinner-border-sm"></span>` : '🔄'}
             </button>
           </div>
@@ -151,16 +184,18 @@ export default function OpenRouterScreen() {
         </div>
       </div>
 
-      <!-- Chat window -->
       <div class="card shadow-sm mb-4 border-0" style="height: 500px; display: flex; flex-direction: column;">
         <div class="card-header bg-light d-flex justify-content-between align-items-center">
-          <h5 class="mb-0">Conversation</h5>
+          <div class="d-flex align-items-center gap-2">
+            <h5 class="mb-0">Conversation</h5>
+            ${status ? html`<span class="badge ${status === 200 ? 'bg-success' : 'bg-danger'}">HTTP ${status}</span>` : ''}
+          </div>
           <button class="btn btn-sm btn-outline-danger" onclick=${clearChat} disabled=${responseLoading}>
             Clear
           </button>
         </div>
         
-        <div class="card-body overflow-auto p-3" style="flex-grow: 1; background-color: #f8f9fa;">
+        <div class="card-body overflow-auto p-3" id="chat-window" style="flex-grow: 1; background-color: #f8f9fa;">
           ${messages.length === 0 ? html`
             <div class="h-100 d-flex flex-column justify-content-center align-items-center text-muted">
               <span style="font-size: 3rem;">💬</span>
@@ -194,9 +229,9 @@ export default function OpenRouterScreen() {
                       value=${userInput}
                       oninput=${(e) => setUserInput(e.target.value)}
                       onkeydown=${(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
-                      disabled=${responseLoading || !model || !apiKey.trim()}></textarea>
+                      disabled=${responseLoading || !model}></textarea>
             <button class="btn btn-primary" onclick=${sendMessage}
-                    disabled=${responseLoading || !userInput.trim() || !model || !apiKey.trim()}>
+                    disabled=${responseLoading || !userInput.trim() || !model}>
               Send
             </button>
           </div>
