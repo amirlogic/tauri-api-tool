@@ -11,6 +11,7 @@ export default function OllamaScreen() {
   const [userInput, setUserInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [status, setStatus] = useState(null);
 
   useEffect(() => {
     loadModels();
@@ -47,6 +48,7 @@ export default function OllamaScreen() {
 
     setLoading(true);
     setError(null);
+    setStatus(null);
 
     const userMsg = { role: 'user', content: userInput };
     const updatedMessages = [...messages, userMsg];
@@ -62,24 +64,34 @@ export default function OllamaScreen() {
         ...updatedMessages
       ];
 
+      const payloadObj = {
+        model: selectedModel,
+        messages: payloadMessages,
+        stream: false
+      };
+
+      const bodyData = (tauriHttp && tauriHttp.Body && tauriHttp.Body.json) 
+          ? tauriHttp.Body.json(payloadObj) 
+          : JSON.stringify(payloadObj);
+
       const response = await fetchFn(`${baseUrl}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: tauriHttp ? {
-          model: selectedModel,
-          messages: payloadMessages,
-          stream: false
-        } : JSON.stringify({
-          model: selectedModel,
-          messages: payloadMessages,
-          stream: false
-        })
+        body: bodyData
       });
 
-      const data = tauriHttp ? response.data : await response.json();
+      setStatus(response.status);
+
+      if (!response.ok && response.status) {
+         throw new Error(`HTTP Error: ${response.status} ${response.statusText || ''}`);
+      }
+
+      const data = typeof response.json === 'function' ? await response.json() : response.data;
 
       if (data && data.message) {
         setMessages(prev => [...prev, data.message]);
+      } else if (data && data.error) {
+        throw new Error(data.error);
       }
     } catch (err) {
       setError(`Error: ${err.message}`);
@@ -124,7 +136,10 @@ export default function OllamaScreen() {
 
       <div class="card shadow-sm border-0" style="height: 500px; display: flex; flex-direction: column;">
         <div class="card-header bg-light d-flex justify-content-between align-items-center">
-          <h5 class="mb-0">Chat</h5>
+          <div class="d-flex align-items-center gap-2">
+            <h5 class="mb-0">Chat</h5>
+            ${status ? html`<span class="badge ${status === 200 ? 'bg-success' : 'bg-danger'}">HTTP ${status}</span>` : ''}
+          </div>
           <button class="btn btn-sm btn-outline-secondary" onclick=${() => setMessages([])}>Clear</button>
         </div>
         
