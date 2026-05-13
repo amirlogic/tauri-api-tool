@@ -133,6 +133,28 @@ export default function OpenRouterScreen() {
     }
   }
 
+  async function exportToMarkdown(content) {
+    try {
+      const dialog = window.__TAURI__?.dialog;
+      const fs = window.__TAURI__?.fs;
+      if (!dialog || !fs) throw new Error('Tauri APIs are not available.');
+      
+      const filePath = await dialog.save({
+        title: 'Save Markdown',
+        filters: [{
+          name: 'Markdown',
+          extensions: ['md']
+        }]
+      });
+      
+      if (filePath) {
+        await fs.writeTextFile(filePath, content);
+      }
+    } catch (err) {
+      setError(`Export failed: ${err.message}`);
+    }
+  }
+
   function clearChat() {
     setMessages([]);
     setError(null);
@@ -202,7 +224,7 @@ export default function OpenRouterScreen() {
               <p>Start a conversation...</p>
             </div>
           ` : messages.map(msg => html`
-            <div class="mb-3 d-flex ${msg.role === 'user' ? 'justify-content-end' : 'justify-content-start'}">
+            <div class="mb-3 d-flex flex-column ${msg.role === 'user' ? 'align-items-end' : 'align-items-start'}">
               <div style="max-width: 80%; padding: 10px 15px; border-radius: 12px; 
                           background: ${msg.role === 'user' ? '#007bff' : '#e9ecef'};
                           color: ${msg.role === 'user' ? 'white' : '#000'};">
@@ -210,6 +232,14 @@ export default function OpenRouterScreen() {
                   ${msg.content}
                 </div>
               </div>
+              ${msg.role !== 'user' ? html`
+                <div class="mt-1 ms-2">
+                  <a href="#" class="text-decoration-none small text-muted" 
+                     onclick=${(e) => { e.preventDefault(); exportToMarkdown(msg.content); }}>
+                    export to markdown
+                  </a>
+                </div>
+              ` : ''}
             </div>
           `)}
           ${responseLoading ? html`
