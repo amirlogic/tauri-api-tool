@@ -56,6 +56,20 @@ export default function OllamaScreen() {
     setUserInput('');
 
     try {
+      const Database = window.__TAURI__.sql;
+      let apiKey = '';
+      if (Database) {
+        const conn = await Database.load('sqlite:test.db');
+        const modelRows = await conn.select("SELECT provider FROM models WHERE model_name = ? LIMIT 1", [selectedModel]);
+        if (modelRows && modelRows.length > 0) {
+          const provider = modelRows[0].provider;
+          const keyRows = await conn.select("SELECT api_key FROM apikeys WHERE provider = ? LIMIT 1", [provider]);
+          if (keyRows && keyRows.length > 0) {
+            apiKey = keyRows[0].api_key;
+          }
+        }
+      }
+
       const tauriHttp = window.__TAURI__?.http;
       const fetchFn = tauriHttp ? tauriHttp.fetch : window.fetch;
       
@@ -74,9 +88,14 @@ export default function OllamaScreen() {
           ? tauriHttp.Body.json(payloadObj) 
           : JSON.stringify(payloadObj);
 
+      const headers = { 'Content-Type': 'application/json' };
+      if (apiKey) {
+        headers['Authorization'] = `Bearer ${apiKey}`;
+      }
+
       const response = await fetchFn(`${baseUrl}/chat`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: bodyData
       });
 
