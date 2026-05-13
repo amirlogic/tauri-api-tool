@@ -61,6 +61,10 @@ export function parseRoute(hash = '') {
     return { name: 'models', params: {}, path: '/models' };
   }
 
+  if (segments[0] === 'openrouter') {
+    return { name: 'openrouter', params: {}, path: '/openrouter' };
+  }
+
   return { name: 'not-found', params: { path: normalizedPath }, path: normalizedPath };
 }
 
@@ -103,6 +107,9 @@ export function buildRoutePath(name = 'home', params = {}) {
   }
   if (name === 'models') {
     return '/models';
+  }
+  if (name === 'openrouter') {
+    return '/openrouter';
   }
   return '/';
 }
