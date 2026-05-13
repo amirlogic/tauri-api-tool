@@ -26,7 +26,7 @@ export default function OpenRouterScreen() {
       if (!Database) throw new Error('SQL plugin not available');
       const conn = await Database.load('sqlite:test.db');
       
-      const rows = await conn.select("SELECT * FROM models");
+      const rows = await conn.select("SELECT * FROM models WHERE provider = 'openrouter'");
       const modelNames = rows.map(m => m.model_name);
       
       setModels(modelNames);

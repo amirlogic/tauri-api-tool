@@ -2,7 +2,7 @@ const { h } = window.preact;
 const { useState, useEffect } = window.preactHooks;
 const html = window.htm.bind(h);
 
-export default function OllamaScreen() {
+export default function OllamaScreen({ provider = 'ollama' }) {
   const [baseUrl, setBaseUrl] = useState('http://localhost:11434/api');
   const [models, setModels] = useState([]);
   const [selectedModel, setSelectedModel] = useState('');
@@ -31,7 +31,7 @@ export default function OllamaScreen() {
       if (!Database) throw new Error('SQL plugin not available');
       const conn = await Database.load('sqlite:test.db');
       
-      const rows = await conn.select("SELECT * FROM models");
+      const rows = await conn.select("SELECT * FROM models WHERE provider = ?", [provider]);
       const modelNames = rows.map(m => m.model_name);
       
       setModels(modelNames);
@@ -121,8 +121,8 @@ export default function OllamaScreen() {
 
   return html`
     <div class="mt-5">
-      <h1>🦙 Ollama Chat</h1>
-      <p>Chat with Ollama models running locally.</p>
+      <h1>${provider === 'ollama' ? '🦙 Ollama Chat' : '🖥️ LM Studio Chat'}</h1>
+      <p>Chat with ${provider === 'ollama' ? 'Ollama' : 'LM Studio'} models running locally.</p>
 
       <div class="row g-3 mb-4">
         <div class="col-md-6">

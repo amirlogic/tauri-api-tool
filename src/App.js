@@ -68,8 +68,8 @@ function App() {
     `,
     database: () => html`<${DatabaseScreen} />`,
     openrouter: () => html`<${OpenRouterScreen} />`,
-    ollama: () => html`<${OllamaScreen} />`,
-    lmstudio: () => html`<${OllamaScreen} />`,
+    ollama: () => html`<${OllamaScreen} provider="ollama" />`,
+    lmstudio: () => html`<${OllamaScreen} provider="lmstudio" />`,
     'api-keys': () => html`<${ApiKeysScreen} />`,
     'models': () => html`<${ModelsScreen} />`,
     'not-found': () => html`
