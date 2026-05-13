@@ -57,6 +57,10 @@ export function parseRoute(hash = '') {
     return { name: 'api-keys', params: {}, path: '/api-keys' };
   }
 
+  if (segments[0] === 'models') {
+    return { name: 'models', params: {}, path: '/models' };
+  }
+
   return { name: 'not-found', params: { path: normalizedPath }, path: normalizedPath };
 }
 
@@ -96,6 +100,9 @@ export function buildRoutePath(name = 'home', params = {}) {
   }
   if (name === 'api-keys') {
     return '/api-keys';
+  }
+  if (name === 'models') {
+    return '/models';
   }
   return '/';
 }

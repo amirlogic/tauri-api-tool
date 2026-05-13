@@ -1,6 +1,7 @@
 import DatabaseScreen from './screens/DatabaseScreen.js';
 import OpenRouterScreen from './screens/OpenRouterScreen.js';
 import ApiKeysScreen from './screens/ApiKeysScreen.js';
+import ModelsScreen from './screens/ModelsScreen.js';
 import OllamaScreen from './screens/OllamaScreen.js';
 import { useHashRoute } from './router.js';
 
@@ -45,6 +46,7 @@ function App() {
     ollama: () => html`<${OllamaScreen} />`,
     lmstudio: () => html`<${OllamaScreen} />`,
     'api-keys': () => html`<${ApiKeysScreen} />`,
+    'models': () => html`<${ModelsScreen} />`,
     'not-found': () => html`
       <div class="text-center mt-5">
         <h1>404 - Not Found</h1>
@@ -91,6 +93,10 @@ function App() {
               <li class="nav-item">
                 <a class="nav-link ${route.name === 'api-keys' ? 'active fw-bold' : ''}" 
                    href="#" onclick=${(e) => { e.preventDefault(); navigate('api-keys'); }}>API Keys</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link ${route.name === 'models' ? 'active fw-bold' : ''}" 
+                   href="#" onclick=${(e) => { e.preventDefault(); navigate('models'); }}>Models</a>
               </li>
             </ul>
           </div>

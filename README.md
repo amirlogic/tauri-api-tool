@@ -2,11 +2,7 @@
 
 Many functions that demonstrates Tauri capabilities:
 
-- Navigation between views without reloading
-- Dialogs to select files or directories
-- Database operations (SQLite)
-- Text file operations (reading, watching for changes)
-- Directory watching (copying files to a destination directory)
+
 - API calls (Ollama - LLM) with API keys management
 
 Preact based, No webpack needed
