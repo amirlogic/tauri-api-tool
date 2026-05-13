@@ -11,13 +11,10 @@ const html = window.htm.bind(h);
 
 function App() {
   const [route, navigate] = useHashRoute();
-  const [count, setCount] = useState(0);
 
   useEffect(() => {
     const handler = (event) => {
-      if (event?.detail === 'increment-counter') {
-        setCount((c) => c + 1);
-      } else if (event?.detail?.startsWith('navigate-')) {
+      if (event?.detail?.startsWith('navigate-')) {
         const targetRoute = event.detail.replace('navigate-', '');
         navigate(targetRoute);
       }
@@ -29,15 +26,43 @@ function App() {
 
   const routeMap = {
     home: () => html`
-      <div class="text-center mt-5">
-        <h1>Home Page</h1>
-        <p>Welcome to the Tauri API Tool!</p>
-        <div class="mt-4">
-          <h3>Counter Example</h3>
-          <p>Count: ${count}</p>
-          <button class="btn btn-primary" onclick=${() => setCount(count + 1)}>
-            Increment
-          </button>
+      <div class="py-5 text-center">
+        <div class="container py-5">
+          <h1 class="display-3 fw-bold mb-4">LLM APIs Client</h1>
+          <p class="lead mb-5 mx-auto text-secondary" style="max-width: 800px;">
+            A unified desktop interface for managing and interacting with diverse Large Language Model APIs. 
+            Connect to cloud providers like OpenRouter or local instances like Ollama and LM Studio through a single, secure application.
+          </p>
+          
+          <div class="row g-4 justify-content-center mt-5">
+            <div class="col-md-4">
+              <div class="card h-100 border-0 shadow-sm p-4 bg-light">
+                <div class="display-5 mb-3">🚀</div>
+                <h4 class="fw-bold">OpenRouter</h4>
+                <p class="text-muted small">Access a vast catalog of cloud models with unified management and billing.</p>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card h-100 border-0 shadow-sm p-4 bg-light">
+                <div class="display-5 mb-3">🏠</div>
+                <h4 class="fw-bold">Local LLMs</h4>
+                <p class="text-muted small">Seamless integration with Ollama and LM Studio for private, local inference.</p>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card h-100 border-0 shadow-sm p-4 bg-light">
+                <div class="display-5 mb-3">🛡️</div>
+                <h4 class="fw-bold">Secure Storage</h4>
+                <p class="text-muted small">Your API keys and model configurations are stored safely in a local SQLite database.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-5 pt-4">
+            <button class="btn btn-primary btn-lg px-5 shadow-sm" onclick=${() => navigate('openrouter')}>
+              Get Started
+            </button>
+          </div>
         </div>
       </div>
     `,
@@ -64,8 +89,8 @@ function App() {
     <div>
       <nav class="navbar navbar-expand-lg bg-body-tertiary">
         <div class="container-fluid">
-          <a class="navbar-brand" href="#" onclick=${(e) => { e.preventDefault(); navigate('home'); }}>
-            TMA
+          <a class="navbar-brand fw-bold" href="#" onclick=${(e) => { e.preventDefault(); navigate('home'); }}>
+            LLM Client
           </a>
           
           <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">

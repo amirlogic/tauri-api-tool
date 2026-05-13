@@ -242,13 +242,6 @@ window.addEventListener("DOMContentLoaded", () => {
             },
           }),
           await MenuItem.new({
-            id: 'increment-counter',
-            text: 'Increment Counter',
-            action: () => {
-              window.dispatchEvent(new CustomEvent('tauri-menu-command', { detail: 'increment-counter' }));
-            },
-          }),
-          await MenuItem.new({
             id: 'edit',
             text: 'Edit',
             action: async () => {
