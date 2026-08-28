@@ -194,7 +194,6 @@
     "sql:allow-load",
     "sql:allow-select",
     "core:event:default",
-    "deep-link:default",
     {
       "identifier": "http:default",
       "allow": [
