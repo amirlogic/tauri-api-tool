@@ -30,9 +30,5 @@
       "icons/icon.ico"
     ],
     "windows": {}
-  },
-  "plugins": {
-    "description": "The plugins config."    
-    
   }
 }
