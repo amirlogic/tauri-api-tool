@@ -7,7 +7,7 @@
     "tauri": "tauri"
   },
   "devDependencies": {
-    "@tauri-apps/cli": "^2.10.1"
+    "@tauri-apps/cli": "^2.11.4"
   },
   "dependencies": {
     "@tauri-apps/plugin-dialog": "~2.7.2",
