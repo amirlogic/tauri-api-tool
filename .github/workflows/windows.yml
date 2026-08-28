@@ -24,7 +24,7 @@ jobs:
         run: npm install -g pnpm
 
       - name: install frontend dependencies
-        run: pnpm install dialog fs shell store opener os deep-link cli http
+        run: pnpm install dialog fs shell store opener os http
 
       - name: Build Tauri app
         run: pnpm tauri build
