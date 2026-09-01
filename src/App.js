@@ -3,6 +3,7 @@ import OpenRouterScreen from './screens/OpenRouterScreen.js';
 import ApiKeysScreen from './screens/ApiKeysScreen.js';
 import ModelsScreen from './screens/ModelsScreen.js';
 import OllamaScreen from './screens/OllamaScreen.js';
+import LMStudioScreen from './screens/LMStudioScreen.js';
 import { useHashRoute } from './router.js';
 
 const { h } = window.preact;
@@ -69,7 +70,7 @@ function App() {
     database: () => html`<${DatabaseScreen} />`,
     openrouter: () => html`<${OpenRouterScreen} />`,
     ollama: () => html`<${OllamaScreen} provider="ollama" />`,
-    lmstudio: () => html`<${OllamaScreen} provider="lmstudio" />`,
+    lmstudio: () => html`<${LMStudioScreen} />`,
     'api-keys': () => html`<${ApiKeysScreen} />`,
     'models': () => html`<${ModelsScreen} />`,
     'not-found': () => html`
