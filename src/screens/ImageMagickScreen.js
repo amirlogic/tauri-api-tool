@@ -233,7 +233,7 @@ Strict Rules:
 1. Always start the command with 'magick' (ImageMagick v7 syntax).
 2. Use valid ImageMagick v7 command options.
 3. Keep exact file paths provided above. Enclose file paths in double quotes.
-4. Return ONLY the raw shell command inside a ```bash code block. Do NOT include explanations outside the code block.`;
+4. Return ONLY the raw shell command inside a \`\`\`bash code block. Do NOT include explanations outside the code block.`;
 
       const userMessageContent = `Requested edit: ${prompt}`;
 
