@@ -573,7 +573,7 @@ Strict Rules:
               <button class="btn btn-success w-100"
                       onclick=${handleExecuteCommand}
                       disabled=${executing || !generatedCommand.trim()}>
-                ${executing ? html`<span class="spinner-border spinner-border-sm me-2"></span>Review & Execute`}
+                ${executing ? html`<span class="spinner-border spinner-border-sm me-2"></span>Executing...` : '▶ Review & Execute'}
               </button>
             </div>
           </div>
