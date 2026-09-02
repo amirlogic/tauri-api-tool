@@ -65,6 +65,10 @@ export function parseRoute(hash = '') {
     return { name: 'openrouter', params: {}, path: '/openrouter' };
   }
 
+  if (segments[0] === 'imagemagick') {
+    return { name: 'imagemagick', params: {}, path: '/imagemagick' };
+  }
+
   return { name: 'not-found', params: { path: normalizedPath }, path: normalizedPath };
 }
 
@@ -110,6 +114,9 @@ export function buildRoutePath(name = 'home', params = {}) {
   }
   if (name === 'openrouter') {
     return '/openrouter';
+  }
+  if (name === 'imagemagick') {
+    return '/imagemagick';
   }
   return '/';
 }

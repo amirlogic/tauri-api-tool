@@ -316,6 +316,13 @@ window.addEventListener("DOMContentLoaded", () => {
               window.dispatchEvent(new CustomEvent('tauri-menu-command', { detail: 'navigate-lmstudio' }));
             },
           }),
+          await MenuItem.new({
+            id: 'imagemagick',
+            text: 'ImageMagick',
+            action: async () => {
+              window.dispatchEvent(new CustomEvent('tauri-menu-command', { detail: 'navigate-imagemagick' }));
+            },
+          }),
           await PredefinedMenuItem.new({
             text: 'separator-text',
             item: 'Separator',

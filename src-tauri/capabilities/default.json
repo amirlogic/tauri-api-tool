@@ -151,6 +151,12 @@
           "sidecar": false
         },
         {
+          "name": "magick.exe",
+          "cmd": "magick.exe",
+          "args": true,
+          "sidecar": false
+        },
+        {
           "name": "ffmpeg",
           "cmd": "ffmpeg",
           "args": true,
