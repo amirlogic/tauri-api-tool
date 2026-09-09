@@ -18,6 +18,11 @@ export default function LMStudioScreen() {
   const [error, setError] = useState(null);
   const [status, setStatus] = useState(null);
 
+  // Server status states
+  const [serverState, setServerState] = useState('checking'); // 'checking' | 'running' | 'stopped' | 'starting' | 'error'
+  const [serverDetails, setServerDetails] = useState('');
+  const [startingServer, setStartingServer] = useState(false);
+
   const getBaseUrl = () => {
     const cleanHost = (host || 'http://localhost').replace(/\/+$/, '');
     const cleanPort = (port || '').trim();
@@ -43,6 +48,7 @@ export default function LMStudioScreen() {
   }, [apiPrefix]);
 
   useEffect(() => {
+    checkServerStatus();
     loadModels();
   }, [host, port, apiPrefix]);
 
@@ -52,6 +58,112 @@ export default function LMStudioScreen() {
       chatWin.scrollTop = chatWin.scrollHeight;
     }
   }, [messages, loading]);
+
+  async function checkServerStatus() {
+    setServerState('checking');
+    setServerDetails('');
+
+    const Command = window.__TAURI__?.shell?.Command;
+    let cliChecked = false;
+
+    // 1. Try lms server status --json via CLI
+    if (Command) {
+      try {
+        let cmd = Command.create('lms', ['server', 'status', '--json']);
+        let output;
+        try {
+          output = await cmd.execute();
+        } catch (e1) {
+          // Fallback to lms status --json if available
+          cmd = Command.create('lms', ['status', '--json']);
+          output = await cmd.execute();
+        }
+
+        if (output && output.code === 0 && output.stdout) {
+          cliChecked = true;
+          try {
+            const parsed = JSON.parse(output.stdout.trim());
+            const isRunning = parsed.status === 'ON' || parsed.status === 'running' || parsed.running === true || parsed.isOnline === true;
+            if (isRunning) {
+              setServerState('running');
+              setServerDetails(parsed.port ? `Port ${parsed.port}` : 'Server active');
+            } else {
+              setServerState('stopped');
+              setServerDetails('Server stopped');
+            }
+          } catch (jsonErr) {
+            // Raw text output handling
+            if (output.stdout.toLowerCase().includes('running') || output.stdout.toLowerCase().includes('on')) {
+              setServerState('running');
+              setServerDetails(output.stdout.trim());
+            } else {
+              setServerState('stopped');
+              setServerDetails(output.stdout.trim());
+            }
+          }
+        }
+      } catch (cliErr) {
+        // CLI command execution error or lms not in PATH
+      }
+    }
+
+    // 2. Fallback to HTTP endpoint check if CLI check didn't produce result
+    if (!cliChecked) {
+      try {
+        const baseUrl = getBaseUrl();
+        const tauriHttp = window.__TAURI__?.http;
+        const fetchFn = tauriHttp ? tauriHttp.fetch : window.fetch;
+        
+        const response = await fetchFn(`${baseUrl}/models`, { method: 'GET' });
+        if (response) {
+          setServerState('running');
+          setServerDetails(`HTTP Endpoint reachable (${response.status})`);
+        } else {
+          setServerState('stopped');
+          setServerDetails('Endpoint not responding');
+        }
+      } catch (httpErr) {
+        setServerState('stopped');
+        setServerDetails('Server offline or port unreachable');
+      }
+    }
+  }
+
+  async function startServer() {
+    setStartingServer(true);
+    setServerState('starting');
+    setError(null);
+
+    const Command = window.__TAURI__?.shell?.Command;
+    if (!Command) {
+      setError('Tauri shell API unavailable. Cannot launch server command.');
+      setStartingServer(false);
+      setServerState('stopped');
+      return;
+    }
+
+    try {
+      const args = port ? ['server', 'start', '--port', String(port)] : ['server', 'start'];
+      const cmd = Command.create('lms', args);
+      
+      // Spawn or execute command
+      const output = await cmd.execute();
+      if (output && output.code !== 0 && output.stderr) {
+        throw new Error(output.stderr);
+      }
+
+      // Wait brief moment for server to initialize
+      setTimeout(async () => {
+        await checkServerStatus();
+        await loadModels();
+        setStartingServer(false);
+      }, 3000);
+    } catch (err) {
+      setError(`Failed to start LM Studio server: ${err.message || err}`);
+      setServerState('error');
+      setStartingServer(false);
+    }
+  }
 
   async function loadModels() {
     setFetchingModels(true);
@@ -222,7 +334,37 @@ export default function LMStudioScreen() {
 
       <div class="card shadow-sm border-0 mb-4 bg-light">
         <div class="card-body">
-          <h6 class="fw-bold mb-3">⚙️ Server & Port Configuration</h6>
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="fw-bold mb-0">⚙️ Server & Port Configuration</h6>
+            
+            <div class="d-flex align-items-center gap-2">
+              <span class="small fw-bold me-1">Server Status:</span>
+              ${serverState === 'running' ? html`
+                <span class="badge bg-success p-2">🟢 Server Online ${serverDetails ? `(${serverDetails})` : ''}</span>
+              ` : serverState === 'starting' ? html`
+                <span class="badge bg-warning text-dark p-2">
+                  <span class="spinner-border spinner-border-sm me-1"></span> Starting Server...
+                </span>
+              ` : serverState === 'checking' ? html`
+                <span class="badge bg-secondary p-2">
+                  <span class="spinner-border spinner-border-sm me-1"></span> Checking Status...
+                </span>
+              ` : html`
+                <span class="badge bg-danger p-2">🔴 Server Offline</span>
+              `}
+
+              <button class="btn btn-sm btn-outline-secondary" onclick=${checkServerStatus} disabled=${serverState === 'checking' || startingServer} title="Refresh Server Status">
+                🔄 Status
+              </button>
+
+              ${(serverState === 'stopped' || serverState === 'error') ? html`
+                <button class="btn btn-sm btn-primary" onclick=${startServer} disabled=${startingServer}>
+                  🚀 Start LM Studio Server
+                </button>
+              ` : ''}
+            </div>
+          </div>
+
           <div class="row g-3">
             <div class="col-md-5">
               <label class="form-label small fw-bold">Host / Protocol</label>

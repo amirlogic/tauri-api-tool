@@ -191,6 +191,18 @@
           "cmd": "python",
           "args": true,
           "sidecar": false
+        },
+        {
+          "name": "lms",
+          "cmd": "lms",
+          "args": true,
+          "sidecar": false
+        },
+        {
+          "name": "lms.exe",
+          "cmd": "lms.exe",
+          "args": true,
+          "sidecar": false
         }
       ]
     },
