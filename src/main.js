@@ -323,6 +323,13 @@ window.addEventListener("DOMContentLoaded", () => {
               window.dispatchEvent(new CustomEvent('tauri-menu-command', { detail: 'navigate-imagemagick' }));
             },
           }),
+          await MenuItem.new({
+            id: 'git',
+            text: 'Git',
+            action: async () => {
+              window.dispatchEvent(new CustomEvent('tauri-menu-command', { detail: 'navigate-git' }));
+            },
+          }),
           await PredefinedMenuItem.new({
             text: 'separator-text',
             item: 'Separator',

@@ -187,6 +187,12 @@
           "sidecar": false
         },
         {
+          "name": "git.exe",
+          "cmd": "git.exe",
+          "args": true,
+          "sidecar": false
+        },
+        {
           "name": "python",
           "cmd": "python",
           "args": true,

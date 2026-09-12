@@ -1,3 +1,7 @@
+import { chatCompletion, httpFetch } from '../services/llmService.js';
+import { getModelsForProviders } from '../services/dbService.js';
+import ChatWindow from '../components/ChatWindow.js';
+
 const { h } = window.preact;
 const { useState, useEffect } = window.preactHooks;
 const html = window.htm.bind(h);
@@ -52,13 +56,6 @@ export default function LMStudioScreen() {
     loadModels();
   }, [host, port, apiPrefix]);
 
-  useEffect(() => {
-    const chatWin = document.getElementById('chat-window');
-    if (chatWin) {
-      chatWin.scrollTop = chatWin.scrollHeight;
-    }
-  }, [messages, loading]);
-
   async function checkServerStatus() {
     setServerState('checking');
     setServerDetails('');
@@ -111,11 +108,8 @@ export default function LMStudioScreen() {
     if (!cliChecked) {
       try {
         const baseUrl = getBaseUrl();
-        const tauriHttp = window.__TAURI__?.http;
-        const fetchFn = tauriHttp ? tauriHttp.fetch : window.fetch;
-        
-        const response = await fetchFn(`${baseUrl}/models`, { method: 'GET' });
-        if (response) {
+        const response = await httpFetch(`${baseUrl}/models`, { method: 'GET' });
+        if (response && response.status) {
           setServerState('running');
           setServerDetails(`HTTP Endpoint reachable (${response.status})`);
         } else {
@@ -174,15 +168,9 @@ export default function LMStudioScreen() {
 
     // 1. Try to fetch live models from LM Studio GET /v1/models
     try {
-      const tauriHttp = window.__TAURI__?.http;
-      const fetchFn = tauriHttp ? tauriHttp.fetch : window.fetch;
-      
-      const response = await fetchFn(`${baseUrl}/models`, { method: 'GET' });
-      if (response.ok) {
-        const data = typeof response.json === 'function' ? await response.json() : response.data;
-        if (data && Array.isArray(data.data)) {
-          loadedModels = data.data.map(m => m.id || m.name || String(m));
-        }
+      const { ok, data } = await httpFetch(`${baseUrl}/models`, { method: 'GET' });
+      if (ok && data && Array.isArray(data.data)) {
+        loadedModels = data.data.map(m => m.id || m.name || String(m));
       }
     } catch (e) {
       // Live fetch failed, fallback to DB
@@ -190,18 +178,12 @@ export default function LMStudioScreen() {
 
     // 2. Query stored models from SQLite DB
     try {
-      const Database = window.__TAURI__?.sql;
-      if (Database) {
-        const conn = await Database.load('sqlite:test.db');
-        const rows = await conn.select("SELECT * FROM models WHERE provider = 'lmstudio' OR provider = 'lm-studio'");
-        const dbModelNames = rows.map(m => m.model_name);
-        
-        dbModelNames.forEach(name => {
-          if (!loadedModels.includes(name)) {
-            loadedModels.push(name);
-          }
-        });
-      }
+      const dbModelNames = await getModelsForProviders(['lmstudio', 'lm-studio']);
+      dbModelNames.forEach(name => {
+        if (!loadedModels.includes(name)) {
+          loadedModels.push(name);
+        }
+      });
     } catch (dbErr) {
       // Ignore DB load errors if DB table is empty/not present
     }
@@ -228,97 +210,21 @@ export default function LMStudioScreen() {
     setUserInput('');
 
     try {
-      const Database = window.__TAURI__?.sql;
-      let apiKey = '';
-      if (Database) {
-        try {
-          const conn = await Database.load('sqlite:test.db');
-          const keyRows = await conn.select("SELECT api_key FROM apikeys WHERE provider = 'lmstudio' OR provider = 'lm-studio' LIMIT 1");
-          if (keyRows && keyRows.length > 0) {
-            apiKey = keyRows[0].api_key;
-          }
-        } catch (dbErr) {
-          // No api key requirement for default local LM Studio
-        }
-      }
-
-      const tauriHttp = window.__TAURI__?.http;
-      const fetchFn = tauriHttp ? tauriHttp.fetch : window.fetch;
-      
-      const payloadMessages = [
-        { role: 'system', content: systemPrompt },
-        ...updatedMessages
-      ];
-
-      const payloadObj = {
+      const result = await chatCompletion({
+        provider: 'lmstudio',
         model: selectedModel,
-        messages: payloadMessages,
-        temperature: parseFloat(temperature) || 0.7,
-        stream: false
-      };
-
-      const bodyData = (tauriHttp && tauriHttp.Body && tauriHttp.Body.json) 
-          ? tauriHttp.Body.json(payloadObj) 
-          : JSON.stringify(payloadObj);
-
-      const headers = { 'Content-Type': 'application/json' };
-      if (apiKey) {
-        headers['Authorization'] = `Bearer ${apiKey}`;
-      }
-
-      const baseUrl = getBaseUrl();
-      const response = await fetchFn(`${baseUrl}/chat/completions`, {
-        method: 'POST',
-        headers,
-        body: bodyData
+        messages: updatedMessages,
+        systemPrompt,
+        temperature,
+        baseUrl: getBaseUrl()
       });
 
-      setStatus(response.status);
-
-      if (!response.ok && response.status) {
-        throw new Error(`HTTP Error: ${response.status} ${response.statusText || ''}`);
-      }
-
-      const data = typeof response.json === 'function' ? await response.json() : response.data;
-
-      if (data && data.choices && data.choices[0] && data.choices[0].message) {
-        setMessages(prev => [...prev, data.choices[0].message]);
-      } else if (data && data.message) {
-        // Fallback for non-standard or alternative response wrapper
-        const msgObj = typeof data.message === 'string' ? { role: 'assistant', content: data.message } : data.message;
-        setMessages(prev => [...prev, msgObj]);
-      } else if (data && data.error) {
-        const errStr = typeof data.error === 'object' ? (data.error.message || JSON.stringify(data.error)) : data.error;
-        throw new Error(errStr);
-      } else {
-        throw new Error('Unexpected response structure from LM Studio API.');
-      }
+      setStatus(result.status);
+      setMessages(prev => [...prev, result.message]);
     } catch (err) {
       setError(`Error: ${err.message}`);
     } finally {
       setLoading(false);
-    }
-  }
-
-  async function exportToMarkdown(content) {
-    try {
-      const dialog = window.__TAURI__?.dialog;
-      const fs = window.__TAURI__?.fs;
-      if (!dialog || !fs) throw new Error('Tauri APIs are not available.');
-      
-      const filePath = await dialog.save({
-        title: 'Save Markdown',
-        filters: [{
-          name: 'Markdown',
-          extensions: ['md']
-        }]
-      });
-      
-      if (filePath) {
-        await fs.writeTextFile(filePath, content);
-      }
-    } catch (err) {
-      setError(`Export failed: ${err.message}`);
     }
   }
 
@@ -429,63 +335,20 @@ export default function LMStudioScreen() {
                   placeholder="System instruction for LM Studio..."></textarea>
       </div>
 
-      <div class="card shadow-sm border-0" style="height: 500px; display: flex; flex-direction: column;">
-        <div class="card-header bg-light d-flex justify-content-between align-items-center">
-          <div class="d-flex align-items-center gap-2">
-            <h5 class="mb-0">Chat</h5>
-            ${status ? html`<span class="badge ${status === 200 ? 'bg-success' : 'bg-danger'}">HTTP ${status}</span>` : ''}
-          </div>
-          <button class="btn btn-sm btn-outline-secondary" onclick=${() => { setMessages([]); setError(null); setStatus(null); }}>Clear</button>
-        </div>
-        
-        <div class="card-body overflow-auto p-3" id="chat-window" style="flex-grow: 1; background-color: #f8f9fa;">
-          ${messages.length === 0 ? html`
-            <div class="h-100 d-flex flex-column justify-content-center align-items-center text-muted">
-              <span style="font-size: 3rem;">🖥️</span>
-              <p>Start chatting with LM Studio...</p>
-            </div>
-          ` : messages.map(msg => html`
-            <div class="mb-3 d-flex flex-column ${msg.role === 'user' ? 'align-items-end' : 'align-items-start'}">
-              <div style="max-width: 80%; padding: 10px 15px; border-radius: 12px; 
-                          background: ${msg.role === 'user' ? '#007bff' : '#e9ecef'};
-                          color: ${msg.role === 'user' ? 'white' : '#000'};
-                          white-space: pre-wrap; word-wrap: break-word; line-height: 1.4;">
-                ${msg.content}
-              </div>
-              ${msg.role !== 'user' ? html`
-                <div class="mt-1 ms-2">
-                  <a href="#" class="text-decoration-none small text-muted" 
-                     onclick=${(e) => { e.preventDefault(); exportToMarkdown(msg.content); }}>
-                    export to markdown
-                  </a>
-                </div>
-              ` : ''}
-            </div>
-          `)}
-          ${loading ? html`
-            <div class="mb-3 d-flex justify-content-start">
-              <div style="padding: 10px 15px; border-radius: 12px; background: #e9ecef;">
-                <span class="spinner-border spinner-border-sm text-primary"></span>
-                <span class="ms-2">LM Studio is thinking...</span>
-              </div>
-            </div>
-          ` : ''}
-        </div>
-
-        <div class="card-footer bg-white p-3 border-top">
-          <div class="input-group">
-            <textarea class="form-control" placeholder="Type message..." rows="1"
-                      style="resize: none;"
-                      value=${userInput}
-                      oninput=${(e) => setUserInput(e.target.value)}
-                      onkeydown=${(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
-                      disabled=${loading}></textarea>
-            <button class="btn btn-primary" onclick=${sendMessage}
-                    disabled=${loading || !userInput.trim() || !selectedModel}>Send</button>
-          </div>
-          ${error ? html`<div class="alert alert-danger mt-2 mb-0 py-2 px-3">${error}</div>` : ''}
-        </div>
-      </div>
+      <${ChatWindow}
+        messages=${messages}
+        loading=${loading}
+        userInput=${userInput}
+        onSend=${sendMessage}
+        onInputChange=${setUserInput}
+        onClear=${() => { setMessages([]); setError(null); setStatus(null); }}
+        status=${status}
+        error=${error}
+        disabled=${!selectedModel}
+        emptyIcon="🖥️"
+        emptyText="Start chatting with LM Studio..."
+        loadingText="LM Studio is thinking..."
+      />
     </div>
   `;
 }

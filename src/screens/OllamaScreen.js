@@ -1,3 +1,7 @@
+import { chatCompletion } from '../services/llmService.js';
+import { getModelsForProvider } from '../services/dbService.js';
+import ChatWindow from '../components/ChatWindow.js';
+
 const { h } = window.preact;
 const { useState, useEffect } = window.preactHooks;
 const html = window.htm.bind(h);
@@ -15,25 +19,12 @@ export default function OllamaScreen({ provider = 'ollama' }) {
 
   useEffect(() => {
     loadModels();
-  }, [baseUrl]);
-
-  useEffect(() => {
-    const chatWin = document.getElementById('chat-window');
-    if (chatWin) {
-      chatWin.scrollTop = chatWin.scrollHeight;
-    }
-  }, [messages, loading]);
+  }, [baseUrl, provider]);
 
   async function loadModels() {
     try {
       setError(null);
-      const Database = window.__TAURI__.sql;
-      if (!Database) throw new Error('SQL plugin not available');
-      const conn = await Database.load('sqlite:test.db');
-      
-      const rows = await conn.select("SELECT * FROM models WHERE provider = ?", [provider]);
-      const modelNames = rows.map(m => m.model_name);
-      
+      const modelNames = await getModelsForProvider(provider);
       setModels(modelNames);
       if (modelNames.length > 0 && !selectedModel) {
         setSelectedModel(modelNames[0]);
@@ -56,61 +47,18 @@ export default function OllamaScreen({ provider = 'ollama' }) {
     setUserInput('');
 
     try {
-      const Database = window.__TAURI__.sql;
-      let apiKey = '';
-      if (Database) {
-        const conn = await Database.load('sqlite:test.db');
-        const modelRows = await conn.select("SELECT provider FROM models WHERE model_name = ? LIMIT 1", [selectedModel]);
-        if (modelRows && modelRows.length > 0) {
-          const provider = modelRows[0].provider;
-          const keyRows = await conn.select("SELECT api_key FROM apikeys WHERE provider = ? LIMIT 1", [provider]);
-          if (keyRows && keyRows.length > 0) {
-            apiKey = keyRows[0].api_key;
-          }
-        }
-      }
-
-      const tauriHttp = window.__TAURI__?.http;
-      const fetchFn = tauriHttp ? tauriHttp.fetch : window.fetch;
-      
-      const payloadMessages = [
-        { role: 'system', content: systemPrompt },
-        ...updatedMessages
-      ];
-
-      const payloadObj = {
+      const { message, status } = await chatCompletion({
+        provider: 'ollama',
         model: selectedModel,
-        messages: payloadMessages,
-        stream: false
-      };
-
-      const bodyData = (tauriHttp && tauriHttp.Body && tauriHttp.Body.json) 
-          ? tauriHttp.Body.json(payloadObj) 
-          : JSON.stringify(payloadObj);
-
-      const headers = { 'Content-Type': 'application/json' };
-      if (apiKey) {
-        headers['Authorization'] = `Bearer ${apiKey}`;
-      }
-
-      const response = await fetchFn(`${baseUrl}/chat`, {
-        method: 'POST',
-        headers,
-        body: bodyData
+        messages: updatedMessages,
+        systemPrompt,
+        baseUrl
       });
 
-      setStatus(response.status);
+      setStatus(status);
 
-      if (!response.ok && response.status) {
-         throw new Error(`HTTP Error: ${response.status} ${response.statusText || ''}`);
-      }
-
-      const data = typeof response.json === 'function' ? await response.json() : response.data;
-
-      if (data && data.message) {
-        setMessages(prev => [...prev, data.message]);
-      } else if (data && data.error) {
-        throw new Error(data.error);
+      if (message) {
+        setMessages(prev => [...prev, message]);
       }
     } catch (err) {
       setError(`Error: ${err.message}`);
@@ -119,26 +67,10 @@ export default function OllamaScreen({ provider = 'ollama' }) {
     }
   }
 
-  async function exportToMarkdown(content) {
-    try {
-      const dialog = window.__TAURI__?.dialog;
-      const fs = window.__TAURI__?.fs;
-      if (!dialog || !fs) throw new Error('Tauri APIs are not available.');
-      
-      const filePath = await dialog.save({
-        title: 'Save Markdown',
-        filters: [{
-          name: 'Markdown',
-          extensions: ['md']
-        }]
-      });
-      
-      if (filePath) {
-        await fs.writeTextFile(filePath, content);
-      }
-    } catch (err) {
-      setError(`Export failed: ${err.message}`);
-    }
+  function clearChat() {
+    setMessages([]);
+    setError(null);
+    setStatus(null);
   }
 
   return html`
@@ -160,7 +92,7 @@ export default function OllamaScreen({ provider = 'ollama' }) {
           <div class="input-group">
             <select class="form-select" value=${selectedModel}
                     onchange=${(e) => setSelectedModel(e.target.value)}>
-              ${models.map(m => html`<option value=${m}>${m}</option>`) }
+              ${models.map(m => html`<option value=${m} selected=${m === selectedModel}>${m}</option>`)}
             </select>
             <button class="btn btn-outline-secondary" onclick=${loadModels}>🔄</button>
           </div>
@@ -175,53 +107,19 @@ export default function OllamaScreen({ provider = 'ollama' }) {
                   placeholder="System instruction..."></textarea>
       </div>
 
-      <div class="card shadow-sm border-0" style="height: 500px; display: flex; flex-direction: column;">
-        <div class="card-header bg-light d-flex justify-content-between align-items-center">
-          <div class="d-flex align-items-center gap-2">
-            <h5 class="mb-0">Chat</h5>
-            ${status ? html`<span class="badge ${status === 200 ? 'bg-success' : 'bg-danger'}">HTTP ${status}</span>` : ''}
-          </div>
-          <button class="btn btn-sm btn-outline-secondary" onclick=${() => setMessages([])}>Clear</button>
-        </div>
-        
-        <div class="card-body overflow-auto p-3" id="chat-window" style="flex-grow: 1;">
-          ${messages.length === 0 ? html`
-            <div class="text-muted text-center">Start chatting...</div>
-          ` : messages.map(msg => html`
-            <div class="mb-3 d-flex flex-column ${msg.role === 'user' ? 'align-items-end' : 'align-items-start'}">
-              <div style="max-width: 80%; padding: 10px 15px; border-radius: 12px; 
-                          background: ${msg.role === 'user' ? '#007bff' : '#e9ecef'};
-                          color: ${msg.role === 'user' ? 'white' : '#000'};
-                          white-space: pre-wrap; word-wrap: break-word;">
-                ${msg.content}
-              </div>
-              ${msg.role !== 'user' ? html`
-                <div class="mt-1 ms-2">
-                  <a href="#" class="text-decoration-none small text-muted" 
-                     onclick=${(e) => { e.preventDefault(); exportToMarkdown(msg.content); }}>
-                    export to markdown
-                  </a>
-                </div>
-              ` : ''}
-            </div>
-          `)}
-          ${loading ? html`<div class="text-muted">Thinking...</div>` : ''}
-        </div>
-
-        <div class="card-footer bg-white p-3">
-          <div class="input-group">
-            <textarea class="form-control" placeholder="Type message..." rows="1"
-                      style="resize: none;"
-                      value=${userInput}
-                      oninput=${(e) => setUserInput(e.target.value)}
-                      onkeydown=${(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
-                      disabled=${loading}></textarea>
-            <button class="btn btn-primary" onclick=${sendMessage}
-                    disabled=${loading || !userInput.trim()}>Send</button>
-          </div>
-          ${error ? html`<div class="alert alert-danger mt-2 mb-0 py-2 px-3">${error}</div>` : ''}
-        </div>
-      </div>
+      <${ChatWindow}
+        messages=${messages}
+        loading=${loading}
+        userInput=${userInput}
+        onSend=${sendMessage}
+        onInputChange=${setUserInput}
+        onClear=${clearChat}
+        status=${status}
+        error=${error}
+        disabled=${!selectedModel}
+        emptyIcon="🦙"
+        emptyText="Start chatting..."
+      />
     </div>
   `;
 }

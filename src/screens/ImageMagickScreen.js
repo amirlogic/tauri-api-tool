@@ -1,3 +1,6 @@
+import { chatCompletion } from '../services/llmService.js';
+import { getModelsForProvider, getDistinctProviders, getApiKey, ensureTables, getConnection } from '../services/dbService.js';
+
 const { h } = window.preact;
 const { useState, useEffect } = window.preactHooks;
 const html = window.htm.bind(h);
@@ -61,38 +64,11 @@ export default function ImageMagickScreen() {
     setLoadingDb(true);
     setError(null);
     try {
-      const Database = window.__TAURI__?.sql;
-      if (!Database) {
-        throw new Error('Tauri SQL plugin not available.');
-      }
-      const conn = await Database.load('sqlite:test.db');
-      
-      // Ensure tables exist
-      await conn.execute(`
-        CREATE TABLE IF NOT EXISTS models (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          model_name TEXT NOT NULL,
-          provider TEXT NOT NULL,
-          created_at TEXT NOT NULL DEFAULT (datetime('now'))
-        )
-      `);
+      const conn = await getConnection();
+      await ensureTables(conn);
 
-      await conn.execute(`
-        CREATE TABLE IF NOT EXISTS apikeys (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          name TEXT NOT NULL,
-          provider TEXT NOT NULL DEFAULT '',
-          api_key TEXT NOT NULL,
-          created_at TEXT NOT NULL DEFAULT (datetime('now'))
-        )
-      `);
-
-      const modelRows = await conn.select('SELECT DISTINCT provider FROM models');
-      const keyRows = await conn.select('SELECT DISTINCT provider FROM apikeys');
-
-      const providerSet = new Set(['openrouter', 'ollama', 'lmstudio']);
-      modelRows.forEach(r => { if (r.provider) providerSet.add(r.provider.toLowerCase()); });
-      keyRows.forEach(r => { if (r.provider) providerSet.add(r.provider.toLowerCase()); });
+      const dbProviders = await getDistinctProviders();
+      const providerSet = new Set(['openrouter', 'ollama', 'lmstudio', ...dbProviders]);
 
       const providerList = Array.from(providerSet);
       setProviders(providerList);
@@ -113,13 +89,7 @@ export default function ImageMagickScreen() {
 
   async function loadModelsForProvider(prov) {
     try {
-      const Database = window.__TAURI__?.sql;
-      let modelList = [];
-      if (Database) {
-        const conn = await Database.load('sqlite:test.db');
-        const rows = await conn.select('SELECT model_name FROM models WHERE LOWER(provider) = ?', [prov.toLowerCase()]);
-        modelList = rows.map(r => r.model_name);
-      }
+      const modelList = await getModelsForProvider(prov);
       
       setModels(modelList);
       if (modelList.length > 0) {
@@ -210,16 +180,6 @@ export default function ImageMagickScreen() {
     setExecutionOutput(null);
 
     try {
-      const Database = window.__TAURI__?.sql;
-      let apiKey = '';
-      if (Database) {
-        const conn = await Database.load('sqlite:test.db');
-        const keyRows = await conn.select('SELECT api_key FROM apikeys WHERE LOWER(provider) = ? LIMIT 1', [selectedProvider.toLowerCase()]);
-        if (keyRows && keyRows.length > 0) {
-          apiKey = keyRows[0].api_key;
-        }
-      }
-
       const inPath = selectedFile || 'input.jpg';
       const outPath = outputFile || generateDefaultOutputPath(inPath) || 'output.jpg';
 
@@ -238,67 +198,16 @@ Strict Rules:
       const userMessageContent = `Requested edit: ${prompt}`;
 
       const payloadMessages = [
-        { role: 'system', content: systemInstruction },
         { role: 'user', content: userMessageContent }
       ];
 
-      const tauriHttp = window.__TAURI__?.http;
-      const fetchFn = tauriHttp ? tauriHttp.fetch : window.fetch;
-
-      let apiUrl = '';
-      const headers = { 'Content-Type': 'application/json' };
-
-      const provLower = selectedProvider.toLowerCase();
-      if (provLower === 'openrouter') {
-        apiUrl = 'https://openrouter.ai/api/v1/chat/completions';
-        if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`;
-        headers['HTTP-Referer'] = 'tauri-api-tool';
-      } else if (provLower === 'ollama') {
-        apiUrl = 'http://localhost:11434/api/chat';
-        if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`;
-      } else if (provLower === 'lmstudio' || provLower === 'lm-studio') {
-        const host = localStorage.getItem('lmstudio_host') || 'http://localhost';
-        const port = localStorage.getItem('lmstudio_port') || '1234';
-        const prefix = localStorage.getItem('lmstudio_prefix') || '/v1';
-        apiUrl = `${host.replace(/\/+$/, '')}:${port}${prefix.startsWith('/') ? prefix : '/' + prefix}/chat/completions`;
-        if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`;
-      } else {
-        apiUrl = 'https://openrouter.ai/api/v1/chat/completions';
-        if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`;
-      }
-
-      const payloadObj = {
+      const { message } = await chatCompletion({
+        provider: selectedProvider,
         model: selectedModel,
         messages: payloadMessages,
-        stream: false
-      };
-
-      const bodyData = (tauriHttp && tauriHttp.Body && tauriHttp.Body.json)
-        ? tauriHttp.Body.json(payloadObj)
-        : JSON.stringify(payloadObj);
-
-      const response = await fetchFn(apiUrl, {
-        method: 'POST',
-        headers,
-        body: bodyData
+        systemPrompt: systemInstruction
       });
-
-      if (!response.ok && response.status) {
-        throw new Error(`API HTTP Error: ${response.status} ${response.statusText || ''}`);
-      }
-
-      const data = typeof response.json === 'function' ? await response.json() : response.data;
-      let llmText = '';
-
-      if (data && data.choices && data.choices[0] && data.choices[0].message) {
-        llmText = data.choices[0].message.content;
-      } else if (data && data.message) {
-        llmText = typeof data.message === 'string' ? data.message : (data.message.content || '');
-      } else if (data && data.error) {
-        throw new Error(typeof data.error === 'object' ? data.error.message : data.error);
-      } else {
-        throw new Error('Unexpected response format from LLM API.');
-      }
+      const llmText = message.content;
 
       // Extract command from response
       const extractedCmd = extractCommandText(llmText);

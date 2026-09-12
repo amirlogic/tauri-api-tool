@@ -1,3 +1,5 @@
+import { ensureTables } from '../services/dbService.js';
+
 const { h } = window.preact;
 const { useState, useEffect } = window.preactHooks;
 const html = window.htm.bind(h);
@@ -18,15 +20,7 @@ export default function ApiKeysScreen() {
         const Database = window.__TAURI__.sql;
         if (!Database) throw new Error('SQL plugin not available');
         const conn = await Database.load('sqlite:test.db');
-        await conn.execute(`
-          CREATE TABLE IF NOT EXISTS apikeys (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            provider TEXT NOT NULL DEFAULT '',
-            api_key TEXT NOT NULL,
-            created_at TEXT NOT NULL DEFAULT (datetime('now'))
-          )
-        `);
+        await ensureTables(conn);
         setDb(conn);
         await loadKeys(conn);
       } catch (err) {

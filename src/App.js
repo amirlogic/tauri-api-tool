@@ -5,6 +5,7 @@ import ModelsScreen from './screens/ModelsScreen.js';
 import OllamaScreen from './screens/OllamaScreen.js';
 import LMStudioScreen from './screens/LMStudioScreen.js';
 import ImageMagickScreen from './screens/ImageMagickScreen.js';
+import GitScreen from './screens/GitScreen.js';
 import { useHashRoute } from './router.js';
 
 const { h } = window.preact;
@@ -75,6 +76,7 @@ function App() {
     'api-keys': () => html`<${ApiKeysScreen} />`,
     'models': () => html`<${ModelsScreen} />`,
     'imagemagick': () => html`<${ImageMagickScreen} />`,
+    'git': () => html`<${GitScreen} />`,
     'not-found': () => html`
       <div class="text-center mt-5">
         <h1>404 - Not Found</h1>
@@ -121,6 +123,10 @@ function App() {
               <li class="nav-item">
                 <a class="nav-link ${route.name === 'imagemagick' ? 'active fw-bold' : ''}" 
                    href="#" onclick=${(e) => { e.preventDefault(); navigate('imagemagick'); }}>ImageMagick</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link ${route.name === 'git' ? 'active fw-bold' : ''}" 
+                   href="#" onclick=${(e) => { e.preventDefault(); navigate('git'); }}>Git</a>
               </li>
               <li class="nav-item">
                 <a class="nav-link ${route.name === 'api-keys' ? 'active fw-bold' : ''}" 
