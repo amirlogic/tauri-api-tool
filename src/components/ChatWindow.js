@@ -38,7 +38,8 @@ export default function ChatWindow({
   disabled = false,
   emptyIcon = '💬',
   emptyText = 'Start a conversation...',
-  loadingText = 'Thinking...'
+  loadingText = 'Thinking...',
+  height = '500px'
 }) {
   const [exportError, setExportError] = useState(null);
 
@@ -69,7 +70,7 @@ export default function ChatWindow({
   const displayError = error || exportError;
 
   return html`
-    <div class="card shadow-sm mb-4 border-0" style="height: 500px; display: flex; flex-direction: column;">
+    <div class="card shadow-sm mb-4 border-0" style="height: ${height}; display: flex; flex-direction: column;">
       <div class="card-header bg-light d-flex justify-content-between align-items-center">
         <div class="d-flex align-items-center gap-2">
           <h5 class="mb-0">Chat</h5>
