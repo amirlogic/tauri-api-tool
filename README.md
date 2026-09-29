@@ -124,3 +124,39 @@ Tauri has restrictive default permissions
 - "Open with" support
 
 - SQLite plugin
+
+
+## Tests
+
+1. Test Harness & Infrastructure (Step 1)
+Test Runner: Configured Vitest
+ (v5.0.2) with happy-dom
+ and pool: 'vmThreads' in vitest.config.js.
+Scripts: Added "test": "vitest run" and "test:watch": "vitest" to package.json.
+Global Environment Setup: Created test/setup.js which provides:
+Stubs for Preact / HTM runtime globals (window.preactHooks, window.preact, window.htm) so modules with global dependencies load cleanly.
+Automatic teardown and cleanup (vi.clearAllMocks(), localStorage.clear()) after each test.
+
+2. Unit Testing Pure Business Logic (Step 1)
+Router Logic in test/router.test.js:
+Verified parseRoute across default/empty paths, root #, all 15 registered routes, and fallback 404 routes.
+Verified buildRoutePath for route serialization and unknown screen defaults.
+LLM Pure Functions in test/llmService.test.js:
+Verified getProviderEndpoint for OpenRouter, Ollama default and custom URLs, LM Studio custom baseUrl and localStorage persistence.
+Verified getProviderHeaders auth token injection and provider-specific headers (HTTP-Referer).
+Verified parseAssistantResponse for OpenAI format (choices[0].message), Ollama format (message object and string), and error payloads.
+
+3. Tauri IPC Mocking & Service Integration (Step 2)
+IPC Global Mocking: test/setup.js equips window.__TAURI__ with mocks for sql, http, dialog, fs, and shell.
+Database Service in test/dbService.test.js:
+Added resetConnection() to allow clean connection state isolation.
+Tested missing SQL plugin error handling.
+Tested table DDL execution in ensureTables().
+Tested single-key lookups (getApiKey) and two-step model-to-provider key lookups (getApiKeyForModel).
+Tested multi-provider query building in getModelsForProviders and provider deduplication in getDistinctProviders.
+Export Service in test/exportService.test.js:
+Tested exportToMarkdown with simulated file save dialog acceptance, rejection/cancellation, and missing API checks.
+LLM IPC & End-to-End Chat Completion in test/llmService.ipc.test.js:
+Tested httpFetch using Tauri HTTP plugin vs standard browser window.fetch.
+Tested chatCompletion with OpenRouter (reasoning payload, headers, explicit vs DB-resolved API keys) and LM Studio.
+Tested HTTP error propagation on 4xx/5xx responses.

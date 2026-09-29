@@ -28,6 +28,13 @@ export async function getConnection() {
 }
 
 /**
+ * Resets the cached database connection promise (useful for tests or teardown).
+ */
+export function resetConnection() {
+  _connPromise = null;
+}
+
+/**
  * Ensures the models and apikeys tables exist.
  * Call this once during app/screen initialization.
  * @param {object} [conn] Optional existing connection; fetches one if omitted.
