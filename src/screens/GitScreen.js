@@ -194,6 +194,7 @@ export default function GitScreen() {
   const [consoleOutput, setConsoleOutput] = useState(null);
   const [autoRefreshContext, setAutoRefreshContext] = useState(true);
   const [copySuccessId, setCopySuccessId] = useState(null);
+  const [addedToChatFeedback, setAddedToChatFeedback] = useState(false);
 
   // Load providers and models from DB on mount
   useEffect(() => {
@@ -522,6 +523,33 @@ export default function GitScreen() {
       clean = clean.substring(4).trim();
     }
     setManualCommand(clean);
+  }
+
+  function handleAddOutputToChat() {
+    if (!consoleOutput) return;
+
+    const outText = [
+      consoleOutput.stdout ? consoleOutput.stdout.trim() : '',
+      consoleOutput.stderr ? consoleOutput.stderr.trim() : ''
+    ].filter(Boolean).join('\n\n') || '(no output)';
+
+    const snippet = `Command: \`${consoleOutput.command}\` (Exit Code: ${consoleOutput.code ?? 0})\n\`\`\`\n${outText}\n\`\`\``;
+
+    setPrompt(prev => {
+      const trimmed = (prev || '').trim();
+      return trimmed ? `${trimmed}\n\n${snippet}` : snippet;
+    });
+
+    setAddedToChatFeedback(true);
+    setTimeout(() => setAddedToChatFeedback(false), 2000);
+
+    setTimeout(() => {
+      const chatInput = document.querySelector('#chat-window')?.closest('.card')?.querySelector('textarea');
+      if (chatInput) {
+        chatInput.focus();
+        chatInput.scrollTop = chatInput.scrollHeight;
+      }
+    }, 50);
   }
 
   async function handleSubmit() {
@@ -966,6 +994,22 @@ Please use the Git repository status and log context provided above to give spec
                     </div>
                   `}
                 </div>
+              </div>
+
+              <!-- Button under Shell Output -->
+              <div class="d-flex justify-content-between align-items-center">
+                <button type="button" class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1 py-1 px-2 shadow-sm"
+                        onclick=${handleAddOutputToChat}
+                        disabled=${!consoleOutput}
+                        title="Add the shell output content to the LLM chat input">
+                  <span>💬 Add Output to Chat Input</span>
+                  ${addedToChatFeedback ? html`<span class="badge bg-success ms-1">Added ✓</span>` : ''}
+                </button>
+                ${consoleOutput ? html`
+                  <span class="text-muted small" style="font-size: 0.75rem;">
+                    ${(consoleOutput.stdout || consoleOutput.stderr || '').length} characters
+                  </span>
+                ` : ''}
               </div>
 
             </div>

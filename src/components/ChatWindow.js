@@ -118,8 +118,9 @@ export default function ChatWindow({
 
       <div class="card-footer bg-white border-top p-3">
         <div class="input-group">
-          <textarea class="form-control" placeholder="Type your message..." rows="1"
-                    style="resize: none;"
+          <textarea class="form-control" placeholder="Type your message..."
+                    rows=${Math.min(4, Math.max(1, (userInput.match(/\n/g) || []).length + 1))}
+                    style="resize: vertical; max-height: 140px;"
                     value=${userInput}
                     oninput=${(e) => onInputChange(e.target.value)}
                     onkeydown=${handleKeyDown}
