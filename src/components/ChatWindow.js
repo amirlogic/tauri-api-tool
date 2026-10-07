@@ -7,9 +7,47 @@
 
 import { exportToMarkdown } from '../services/exportService.js';
 
-const { h } = window.preact;
-const { useState, useEffect } = window.preactHooks;
+const { h, createRef } = window.preact;
+const { useState, useEffect, useRef } = window.preactHooks;
 const html = window.htm.bind(h);
+
+// ── Configure marked with highlight.js ──────────────────────────────────────
+const marked = window.marked;
+const hljs = window.hljs;
+
+marked.setOptions({
+  breaks: true,       // newlines become <br>
+  gfm: true,          // GitHub-flavored markdown (tables, strikethrough, etc.)
+  highlight(code, lang) {
+    if (lang && hljs.getLanguage(lang)) {
+      return hljs.highlight(code, { language: lang, ignoreIllegals: true }).value;
+    }
+    return hljs.highlightAuto(code).value;
+  },
+});
+
+/**
+ * Renders markdown content as HTML. Uses a ref so Preact never diffs the inner
+ * HTML that marked+hljs produced (which avoids re-escaping it).
+ */
+function MarkdownContent({ content, isUser }) {
+  const ref = useRef(null);
+
+  useEffect(() => {
+    if (ref.current) {
+      ref.current.innerHTML = marked.parse(content || '');
+      // Re-run hljs on any <code> blocks that weren't caught by the renderer
+      ref.current.querySelectorAll('pre code:not(.hljs)').forEach((block) => {
+        hljs.highlightElement(block);
+      });
+    }
+  }, [content]);
+
+  return h('div', {
+    ref,
+    class: `md-content${isUser ? ' user-md' : ''}`,
+  });
+}
 
 /**
  * @param {object} props
@@ -92,9 +130,7 @@ export default function ChatWindow({
             <div style="max-width: 80%; padding: 10px 15px; border-radius: 12px; 
                         background: ${msg.role === 'user' ? '#007bff' : '#e9ecef'};
                         color: ${msg.role === 'user' ? 'white' : '#000'};">
-              <div style="white-space: pre-wrap; word-wrap: break-word; line-height: 1.4;">
-                ${msg.content}
-              </div>
+              <${MarkdownContent} content=${msg.content} isUser=${msg.role === 'user'} />
             </div>
             ${msg.role !== 'user' ? html`
               <div class="mt-1 ms-2">
@@ -135,3 +171,4 @@ export default function ChatWindow({
     </div>
   `;
 }
+
