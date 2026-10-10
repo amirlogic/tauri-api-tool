@@ -331,10 +331,7 @@ export async function chatCompletion({
 
   // Require API key for OpenRouter
   if (prov === 'openrouter' && !apiKey) {
-    throw new Error(
-      `No API key is configured for OpenRouter model "${model}". ` +
-      'Add an OpenRouter key in API Keys and make sure this model is mapped to the OpenRouter provider.'
-    );
+    throw new Error("API Key not found in database for this model's provider.");
   }
   if (prov === 'huggingface' && !apiKey) {
     throw new Error(
