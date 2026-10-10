@@ -94,7 +94,7 @@ function App() {
 
   return html`
     <div>
-      <nav class="navbar navbar-expand-lg bg-body-tertiary">
+      <nav class="navbar navbar-expand-lg bg-body-tertiary" style="font-size: 0.9rem;">
         <div class="container-fluid">
           <a class="navbar-brand fw-bold" href="#" onclick=${(e) => { e.preventDefault(); navigate('home'); }}>
             LLM Client
@@ -106,10 +106,6 @@ function App() {
           
           <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav me-auto">
-              <li class="nav-item">
-                <a class="nav-link ${route.name === 'database' ? 'active fw-bold' : ''}" 
-                   href="#" onclick=${(e) => { e.preventDefault(); navigate('database'); }}>Database</a>
-              </li>
               <li class="nav-item">
                 <a class="nav-link ${route.name === 'openrouter' ? 'active fw-bold' : ''}" 
                    href="#" onclick=${(e) => { e.preventDefault(); navigate('openrouter'); }}>OpenRouter</a>
