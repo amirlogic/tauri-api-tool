@@ -630,7 +630,7 @@ Please use the Git repository status and log context provided above to give spec
         setParsedCommands(commandItems);
       }
     } catch (err) {
-      setError(`Error: ${err.message}`);
+      setError(err.message || String(err));
       setMessages(updatedMessages.slice(0, -1));
       setPrompt(userPromptText);
     } finally {

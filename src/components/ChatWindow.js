@@ -139,7 +139,12 @@ export default function ChatWindow({
             Send
           </button>
         </div>
-        ${displayError ? html`<div class="alert alert-danger mt-2 mb-0 py-2 px-3">${displayError}</div>` : ''}
+        ${displayError ? html`
+          <div class="alert alert-danger mt-2 mb-0 py-2 px-3" role="alert"
+               style="white-space: pre-wrap; overflow-wrap: anywhere;">
+            ${displayError}
+          </div>
+        ` : ''}
       </div>
     </div>
   `;

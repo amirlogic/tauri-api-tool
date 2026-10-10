@@ -61,7 +61,7 @@ export default function OllamaScreen({ provider = 'ollama' }) {
         setMessages(prev => [...prev, message]);
       }
     } catch (err) {
-      setError(`Error: ${err.message}`);
+      setError(err.message || String(err));
     } finally {
       setLoading(false);
     }

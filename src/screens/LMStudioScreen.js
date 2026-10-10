@@ -222,7 +222,7 @@ export default function LMStudioScreen() {
       setStatus(result.status);
       setMessages(prev => [...prev, result.message]);
     } catch (err) {
-      setError(`Error: ${err.message}`);
+      setError(err.message || String(err));
     } finally {
       setLoading(false);
     }

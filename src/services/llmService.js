@@ -40,9 +40,96 @@ export async function httpFetch(url, { method = 'GET', headers = {}, body = null
 
   const status = response.status;
   const ok = response.ok !== undefined ? response.ok : (status >= 200 && status < 300);
-  const data = typeof response.json === 'function' ? await response.json() : response.data;
+  let data = response.data;
+
+  if (data === undefined && typeof response.text === 'function') {
+    const text = await response.text();
+    if (text) {
+      try {
+        data = JSON.parse(text);
+      } catch {
+        data = text;
+      }
+    }
+  } else if (data === undefined && typeof response.json === 'function') {
+    data = await response.json();
+  }
 
   return { status, ok, data };
+}
+
+function getErrorDetail(data) {
+  if (!data) return '';
+
+  const error = data.error ?? data.message ?? data;
+  const detail = typeof error === 'string'
+    ? error
+    : error.message || error.detail || error.details || error.code || JSON.stringify(error);
+
+  return String(detail).trim().slice(0, 600);
+}
+
+function getHttpStatusLabel(status) {
+  return ({
+    400: 'Bad Request',
+    401: 'Unauthorized',
+    403: 'Forbidden',
+    404: 'Not Found',
+    408: 'Request Timeout',
+    413: 'Payload Too Large',
+    429: 'Too Many Requests',
+    500: 'Internal Server Error',
+    502: 'Bad Gateway',
+    503: 'Service Unavailable',
+    504: 'Gateway Timeout',
+  })[status] || 'Request Failed';
+}
+
+function getHttpStatusGuidance(provider, status) {
+  const isOpenRouter = provider === 'openrouter';
+  const isOllama = provider === 'ollama';
+  const isLMStudio = provider === 'lmstudio' || provider === 'lm-studio';
+
+  if (status === 400) {
+    return 'The provider rejected the request. Check the model name and request settings.';
+  }
+  if (status === 401 || status === 403) {
+    return isOpenRouter
+      ? 'Check that the API key is valid, enabled, and has available credits.'
+      : 'Check the API key configured for this local server, if authentication is enabled.';
+  }
+  if (status === 404) {
+    return isOllama
+      ? 'Check the Ollama API URL and confirm this model is installed (for example, run `ollama pull <model>`).'
+      : isLMStudio
+        ? 'Check the LM Studio host, port, and API prefix, and confirm the selected model is loaded.'
+        : 'Check that the selected model is available to your OpenRouter account.';
+  }
+  if (status === 408 || status === 504) {
+    return 'The provider timed out. Try again, or use a smaller prompt or a faster model.';
+  }
+  if (status === 413) {
+    return 'The request is too large. Shorten the conversation or reduce the prompt size.';
+  }
+  if (status === 429) {
+    return isOpenRouter
+      ? 'The account or model rate limit was reached, or credits are unavailable. Wait and retry, or check your OpenRouter limits.'
+      : 'The provider is rate limiting requests. Wait briefly and try again.';
+  }
+  if (status >= 500) {
+    return 'The provider reported a server-side failure. Check that it is running and retry shortly.';
+  }
+  return 'Check the provider configuration and try again.';
+}
+
+function getNetworkGuidance(provider) {
+  if (provider === 'ollama') {
+    return 'Confirm Ollama is running and that the configured API URL is correct.';
+  }
+  if (provider === 'lmstudio' || provider === 'lm-studio') {
+    return 'Confirm the LM Studio server is running and that the configured host, port, and API prefix are correct.';
+  }
+  return 'Check your internet connection and confirm the provider is reachable.';
 }
 
 // ---------------------------------------------------------------------------
@@ -186,13 +273,20 @@ export async function chatCompletion({
 
   // Resolve API key: use explicit key, or look up from DB
   if (apiKey === undefined || apiKey === null) {
-    if (prov === 'lmstudio' || prov === 'lm-studio') {
-      // LM Studio: look up directly by provider (key is optional)
-      apiKey = await getApiKey('lmstudio');
-      if (!apiKey) apiKey = await getApiKey('lm-studio');
-    } else {
-      // Other providers: look up by model's provider mapping
-      apiKey = await getApiKeyForModel(model);
+    try {
+      if (prov === 'lmstudio' || prov === 'lm-studio') {
+        // LM Studio: look up directly by provider (key is optional)
+        apiKey = await getApiKey('lmstudio');
+        if (!apiKey) apiKey = await getApiKey('lm-studio');
+      } else {
+        // Other providers: look up by model's provider mapping
+        apiKey = await getApiKeyForModel(model);
+      }
+    } catch (error) {
+      throw new Error(
+        `Could not retrieve the saved API key for ${provider} from the app database. ` +
+        `Check that the database is available and the key is configured. Details: ${error.message || error}`
+      );
     }
   }
 
@@ -224,22 +318,55 @@ export async function chatCompletion({
 
   // Require API key for OpenRouter
   if (prov === 'openrouter' && !apiKey) {
-    throw new Error("API Key not found in database for this model's provider.");
+    throw new Error(
+      `No API key is configured for OpenRouter model "${model}". ` +
+      'Add an OpenRouter key in API Keys and make sure this model is mapped to the OpenRouter provider.'
+    );
   }
 
   // Send request
-  const { status, ok, data } = await httpFetch(endpoint, {
-    method: 'POST',
-    headers,
-    body: payload
-  });
+  let response;
+  try {
+    response = await httpFetch(endpoint, {
+      method: 'POST',
+      headers,
+      body: payload
+    });
+  } catch (error) {
+    throw new Error(
+      `${provider} could not be reached at ${endpoint}. ${getNetworkGuidance(prov)} ` +
+      `Connection details: ${error.message || error}`
+    );
+  }
 
-  if (!ok && status) {
-    throw new Error(`HTTP Error: ${status}`);
+  const { status, ok, data } = response;
+  if (!ok) {
+    const detail = getErrorDetail(data);
+    throw new Error(
+      `${provider} request failed: HTTP Error: ${status} ${getHttpStatusLabel(status)} at ${endpoint}. ` +
+      `${getHttpStatusGuidance(prov, status)}${detail ? ` Provider detail: ${detail}` : ''}`
+    );
   }
 
   // Parse response
-  const message = parseAssistantResponse(data, prov);
+  let message;
+  try {
+    message = parseAssistantResponse(data, prov);
+  } catch (error) {
+    const detail = getErrorDetail(data);
+    throw new Error(
+      `${provider} returned an unusable response (HTTP ${status}) from ${endpoint}. ` +
+      `${detail ? `Provider detail: ${detail}` : error.message} ` +
+      'Check that the selected model supports chat completions and that the provider endpoint is correct.'
+    );
+  }
+
+  if (typeof message.content !== 'string' || !message.content.trim()) {
+    throw new Error(
+      `${provider} returned an empty assistant message for model "${model}" (HTTP ${status}). ` +
+      'Try a different model or check whether this model requires special chat or reasoning settings.'
+    );
+  }
 
   return { message, status };
 }

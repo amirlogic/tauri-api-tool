@@ -62,7 +62,7 @@ export default function OpenRouterScreen() {
       setStatus(status);
       setMessages(prev => [...prev, message]);
     } catch (err) {
-      setError(`Error: ${err.message}`);
+      setError(err.message || String(err));
       setMessages(updatedMessages.slice(0, -1));
     } finally {
       setResponseLoading(false);
