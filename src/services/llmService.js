@@ -87,6 +87,7 @@ function getHttpStatusLabel(status) {
 
 function getHttpStatusGuidance(provider, status) {
   const isOpenRouter = provider === 'openrouter';
+  const isHuggingFace = provider === 'huggingface';
   const isOllama = provider === 'ollama';
   const isLMStudio = provider === 'lmstudio' || provider === 'lm-studio';
 
@@ -96,13 +97,17 @@ function getHttpStatusGuidance(provider, status) {
   if (status === 401 || status === 403) {
     return isOpenRouter
       ? 'Check that the API key is valid, enabled, and has available credits.'
-      : 'Check the API key configured for this local server, if authentication is enabled.';
+      : isHuggingFace
+        ? 'Check that the Hugging Face token is valid and has Inference Providers permission.'
+        : 'Check the API key configured for this local server, if authentication is enabled.';
   }
   if (status === 404) {
     return isOllama
       ? 'Check the Ollama API URL and confirm this model is installed (for example, run `ollama pull <model>`).'
       : isLMStudio
         ? 'Check the LM Studio host, port, and API prefix, and confirm the selected model is loaded.'
+        : isHuggingFace
+          ? 'Check that this model supports chat completions and is available through Hugging Face Inference Providers.'
         : 'Check that the selected model is available to your OpenRouter account.';
   }
   if (status === 408 || status === 504) {
@@ -139,7 +144,7 @@ function getNetworkGuidance(provider) {
 /**
  * Resolves the chat completions endpoint URL for a given provider.
  *
- * @param {string} provider - 'openrouter' | 'ollama' | 'lmstudio' | 'lm-studio'
+ * @param {string} provider - 'openrouter' | 'huggingface' | 'ollama' | 'lmstudio' | 'lm-studio'
  * @param {object} [options]
  * @param {string} [options.baseUrl] - Override base URL (used by Ollama's URL selector)
  * @returns {string} Full endpoint URL
@@ -149,6 +154,10 @@ export function getProviderEndpoint(provider, options = {}) {
 
   if (prov === 'openrouter') {
     return 'https://openrouter.ai/api/v1/chat/completions';
+  }
+
+  if (prov === 'huggingface') {
+    return 'https://router.huggingface.co/v1/chat/completions';
   }
 
   if (prov === 'ollama') {
@@ -185,7 +194,7 @@ export function getProviderHeaders(provider, apiKey) {
   const prov = provider.toLowerCase();
 
   if (apiKey) {
-    headers['Authorization'] = `Bearer ${apiKey}`;
+    headers['Authorization'] = 'Bearer ' + apiKey;
   }
 
   if (prov === 'openrouter') {
@@ -255,6 +264,7 @@ export function parseAssistantResponse(data, provider) {
  * @param {string} [params.systemPrompt] - System prompt (prepended automatically)
  * @param {number} [params.temperature] - Temperature (only sent if provided)
  * @param {boolean} [params.enableReasoning] - Enable reasoning API (OpenRouter-specific)
+ * @param {'cheapest'|'fastest'|'preferred'} [params.inferenceProviderPolicy] - Hugging Face provider-routing policy
  * @param {string} [params.baseUrl] - Override base URL for the provider
  * @param {string} [params.apiKey] - Explicit API key (skips DB lookup if provided)
  * @returns {Promise<{ message: { role: string, content: string }, status: number }>}
@@ -266,6 +276,7 @@ export async function chatCompletion({
   systemPrompt,
   temperature,
   enableReasoning = false,
+  inferenceProviderPolicy = 'cheapest',
   baseUrl,
   apiKey
 }) {
@@ -278,6 +289,8 @@ export async function chatCompletion({
         // LM Studio: look up directly by provider (key is optional)
         apiKey = await getApiKey('lmstudio');
         if (!apiKey) apiKey = await getApiKey('lm-studio');
+      } else if (prov === 'huggingface') {
+        apiKey = await getApiKey('huggingface');
       } else {
         // Other providers: look up by model's provider mapping
         apiKey = await getApiKeyForModel(model);
@@ -303,7 +316,7 @@ export async function chatCompletion({
 
   // Build request payload
   const payload = {
-    model,
+    model: prov === 'huggingface' ? `${model}:${inferenceProviderPolicy}` : model,
     messages: payloadMessages,
     stream: false
   };
@@ -321,6 +334,13 @@ export async function chatCompletion({
     throw new Error(
       `No API key is configured for OpenRouter model "${model}". ` +
       'Add an OpenRouter key in API Keys and make sure this model is mapped to the OpenRouter provider.'
+    );
+  }
+  if (prov === 'huggingface' && !apiKey) {
+    throw new Error(
+      `No API key is configured for Hugging Face model "${model}". ` +
+      'Add a Hugging Face token in API Keys with provider set to "huggingface". ' +
+      'The token must have permission to make calls to Inference Providers.'
     );
   }
 

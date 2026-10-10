@@ -303,6 +303,13 @@ window.addEventListener("DOMContentLoaded", () => {
             },
           }),
           await MenuItem.new({
+            id: 'huggingface',
+            text: 'HuggingFace',
+            action: async () => {
+              window.dispatchEvent(new CustomEvent('tauri-menu-command', { detail: 'navigate-huggingface' }));
+            },
+          }),
+          await MenuItem.new({
             id: 'ollama',
             text: 'Ollama',
             action: async () => {

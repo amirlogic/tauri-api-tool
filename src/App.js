@@ -1,5 +1,6 @@
 import DatabaseScreen from './screens/DatabaseScreen.js';
 import OpenRouterScreen from './screens/OpenRouterScreen.js';
+import HuggingFaceScreen from './screens/HuggingFaceScreen.js';
 import ApiKeysScreen from './screens/ApiKeysScreen.js';
 import ModelsScreen from './screens/ModelsScreen.js';
 import OllamaScreen from './screens/OllamaScreen.js';
@@ -71,6 +72,7 @@ function App() {
     `,
     database: () => html`<${DatabaseScreen} />`,
     openrouter: () => html`<${OpenRouterScreen} />`,
+    huggingface: () => html`<${HuggingFaceScreen} />`,
     ollama: () => html`<${OllamaScreen} provider="ollama" />`,
     lmstudio: () => html`<${LMStudioScreen} />`,
     'api-keys': () => html`<${ApiKeysScreen} />`,
@@ -111,6 +113,10 @@ function App() {
               <li class="nav-item">
                 <a class="nav-link ${route.name === 'openrouter' ? 'active fw-bold' : ''}" 
                    href="#" onclick=${(e) => { e.preventDefault(); navigate('openrouter'); }}>OpenRouter</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link ${route.name === 'huggingface' ? 'active fw-bold' : ''}"
+                   href="#" onclick=${(e) => { e.preventDefault(); navigate('huggingface'); }}>HuggingFace</a>
               </li>
               <li class="nav-item">
                 <a class="nav-link ${route.name === 'ollama' ? 'active fw-bold' : ''}" 
