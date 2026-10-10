@@ -6,47 +6,20 @@
  */
 
 import { exportToMarkdown } from '../services/exportService.js';
+import { compiler as compileMarkdown } from '../markdown-to-jsx.min.js';
 
-const { h, createRef } = window.preact;
-const { useState, useEffect, useRef } = window.preactHooks;
+const { h } = window.preact;
+const { useState, useEffect } = window.preactHooks;
 const html = window.htm.bind(h);
 
-// ── Configure marked with highlight.js ──────────────────────────────────────
-const marked = window.marked;
-const hljs = window.hljs;
-
-marked.setOptions({
-  breaks: true,       // newlines become <br>
-  gfm: true,          // GitHub-flavored markdown (tables, strikethrough, etc.)
-  highlight(code, lang) {
-    if (lang && hljs.getLanguage(lang)) {
-      return hljs.highlight(code, { language: lang, ignoreIllegals: true }).value;
-    }
-    return hljs.highlightAuto(code).value;
-  },
-});
-
-/**
- * Renders markdown content as HTML. Uses a ref so Preact never diffs the inner
- * HTML that marked+hljs produced (which avoids re-escaping it).
- */
 function MarkdownContent({ content, isUser }) {
-  const ref = useRef(null);
-
-  useEffect(() => {
-    if (ref.current) {
-      ref.current.innerHTML = marked.parse(content || '');
-      // Re-run hljs on any <code> blocks that weren't caught by the renderer
-      ref.current.querySelectorAll('pre code:not(.hljs)').forEach((block) => {
-        hljs.highlightElement(block);
-      });
-    }
-  }, [content]);
-
-  return h('div', {
-    ref,
-    class: `md-content${isUser ? ' user-md' : ''}`,
+  const parsedContent = compileMarkdown(content || '', {
+    wrapper: null,
+    disableParsingRawHTML: true,
+    createElement: h,
   });
+
+  return h('div', { class: `md-content${isUser ? ' user-md' : ''}` }, parsedContent);
 }
 
 /**
@@ -171,4 +144,3 @@ export default function ChatWindow({
     </div>
   `;
 }
-
