@@ -53,6 +53,10 @@ export function parseRoute(hash = '') {
     return { name: 'lmstudio', params: {}, path: '/lmstudio' };
   }
 
+  if (segments[0] === 'transformersjs') {
+    return { name: 'transformersjs', params: {}, path: '/transformersjs' };
+  }
+
   if (segments[0] === 'api-keys') {
     return { name: 'api-keys', params: {}, path: '/api-keys' };
   }
@@ -109,6 +113,9 @@ export function buildRoutePath(name = 'home', params = {}) {
   }
   if (name === 'lmstudio') {
     return '/lmstudio';
+  }
+  if (name === 'transformersjs') {
+    return '/transformersjs';
   }
   if (name === 'api-keys') {
     return '/api-keys';

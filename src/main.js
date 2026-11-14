@@ -324,6 +324,13 @@ window.addEventListener("DOMContentLoaded", () => {
             },
           }),
           await MenuItem.new({
+            id: 'transformersjs',
+            text: 'Transformers.js',
+            action: async () => {
+              window.dispatchEvent(new CustomEvent('tauri-menu-command', { detail: 'navigate-transformersjs' }));
+            },
+          }),
+          await MenuItem.new({
             id: 'imagemagick',
             text: 'ImageMagick',
             action: async () => {
